@@ -1,27 +1,27 @@
 {
-  "$schema": "https://schema.tauri.app/config/2",
-  "productName": "taskr",
+  "$schema": "https://schema.tauri.app/config/v2.json",
+  "identifier": "com.agentplan.dev",
+  "productName": "Agent Plan",
   "version": "0.1.0",
-  "identifier": "com.stoetenremco.taskr",
   "build": {
     "beforeDevCommand": "pnpm dev",
-    "devUrl": "http://localhost:3000",
     "beforeBuildCommand": "pnpm build",
+    "devUrl": "http://localhost:3000",
     "frontendDist": "../dist"
   },
   "app": {
-    "windows": [
-      {
-        "title": "Taskr",
-        "width": 800,
-        "height": 600,
-        "resizable": true,
-        "fullscreen": false
-      }
-    ],
     "security": {
       "csp": null
-    }
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "Agent Plan",
+        "width": 800,
+        "height": 600
+      }
+    ]
   },
   "bundle": {
     "active": true,
@@ -37,6 +37,10 @@
   "plugins": {
     "shell": {
       "open": true
+    },
+    "tray": {
+      "icon": "icons/icon.png",
+      "iconAsTemplate": true
     }
   }
 }
