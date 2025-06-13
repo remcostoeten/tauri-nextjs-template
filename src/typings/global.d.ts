@@ -10,9 +10,9 @@ declare global {
 		 * Augments React's `PropsWithChildren` to ensure `children`
 		 * is globally typed as `React.ReactNode | undefined`
 		 */
-		interface PropsWithChildren<P = {}> extends React.PropsWithChildren<P> {
+		type PropsWithChildren<P = Record<string, unknown>> = {
 			children?: React.ReactNode | undefined;
-		}
+		} & P;
 	}
 
 	// Global type alias for children props
