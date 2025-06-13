@@ -2,7 +2,6 @@
 
 import { RoundedButton } from "@/components/_misc/RoundedButton";
 import { invoke } from "@tauri-apps/api/core";
-import Image from "next/image";
 import { useCallback, useState } from "react";
 
 export default function IndexView() {

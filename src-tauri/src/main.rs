@@ -2,15 +2,25 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod version;
+mod auth;
 
 use version::{get_current_version, increment_version};
+use auth::{hash_password, verify_password, generate_session_token, check_login_rate_limit, save_avatar, RateLimiter};
 
 fn main() {
+    let rate_limiter = RateLimiter::new();
+
     tauri::Builder::default()
+        .manage(rate_limiter)
         .invoke_handler(tauri::generate_handler![
             get_current_version,
             increment_version,
-            get_recent_commits
+            get_recent_commits,
+            hash_password,
+            verify_password,
+            generate_session_token,
+            check_login_rate_limit,
+            save_avatar,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
