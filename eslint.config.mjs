@@ -120,6 +120,14 @@ const eslintConfig = tseslint.config(
           allowNever: true,
         },
       ],
+      "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/use-unknown-in-catch-callback-variable": "off",
+      "@typescript-eslint/prefer-promise-reject-errors": "off",
+      "@typescript-eslint/prefer-regexp-exec": "off",
+      "@typescript-eslint/no-confusing-void-expression": "off"
     },
     languageOptions: {
       parserOptions: {
