@@ -1,6 +1,8 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 use std::time::{SystemTime, UNIX_EPOCH};
 
+pub mod version;
+
 #[tauri::command]
 fn greet() -> String {
   let now = SystemTime::now();

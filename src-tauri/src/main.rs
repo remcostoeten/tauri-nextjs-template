@@ -1,30 +1,17 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod tray;
 mod version;
 
-use tauri::Manager;
-use tray::{create_tray, update_version};
-use version::get_current_version;
-
-#[derive(Clone)]
-struct TrayState(tauri::State<'static, tauri::tray::TrayIcon>);
+use version::{get_current_version, increment_version};
 
 fn main() {
     tauri::Builder::default()
-        .setup(|app| {
-            let tray = create_tray(&app.handle());
-            
-            // Initialize version in tray
-            if let Ok(version) = get_current_version() {
-                update_version(&tray, &version);
-            }
-            
-            app.manage(tray);
-            Ok(())
-        })
-        .invoke_handler(tauri::generate_handler![get_current_version, get_recent_commits])
+        .invoke_handler(tauri::generate_handler![
+            get_current_version,
+            increment_version,
+            get_recent_commits
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
