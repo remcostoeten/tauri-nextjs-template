@@ -1,4 +1,4 @@
-interface RoundedButtonProps {
+type RoundedButtonProps = {
   onClick: () => void;
   title: string;
 }
