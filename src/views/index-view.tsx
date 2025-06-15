@@ -22,6 +22,8 @@ export default function IndexView() {
                 onClick={greet}
                 title="Call &quot;greet&quot; from Rust"
             />
+            <a href="/register" className="text-blue-500 hover:text-blue-700">register</a>
+            <a href="/login" className="text-blue-500 hover:text-blue-700">login</a>
             <p className="break-words w-md">
                 {greeted ?? "Click the button to call the Rust function"}
             </p>
