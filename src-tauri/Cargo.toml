@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
+default-run = "tauri-nextjs-template"  
 
 [lib]
 name = "tauri_nextjs_template_lib"
