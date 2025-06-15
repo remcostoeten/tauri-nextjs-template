@@ -1,0 +1,429 @@
+# Modern Authentication System
+
+## Features Overview
+
+- 🔐 Multiple Auth Methods
+  - Email/Password authentication
+  - GitHub OAuth2 integration
+  - Account linking between providers
+- 👤 Profile Management
+  - Custom avatar upload
+  - Profile synchronization with GitHub
+  - Account settings & preferences
+- 🎨 Modern UX
+  - Instant login after registration
+  - Remember me functionality
+  - Optimistic UI updates
+  - Error handling with user feedback
+- 🛠 Technical Features
+  - PostgreSQL with Neon (serverless)
+  - Connection pooling
+  - Secure session management
+  - Rate limiting
+
+## Database Schema
+
+```sql
+-- migrations/001_auth_tables.sql
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) UNIQUE,
+  password_hash VARCHAR(255),
+  name VARCHAR(255),
+  avatar_url VARCHAR(255),
+  github_id VARCHAR(255) UNIQUE,
+  github_username VARCHAR(255),
+  remember_token VARCHAR(255),
+  last_login TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  refresh_token VARCHAR(255) UNIQUE,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  user_agent VARCHAR(255),
+  ip_address VARCHAR(45)
+);
+
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_github_id ON users(github_id);
+CREATE INDEX idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX idx_sessions_refresh_token ON sessions(refresh_token);
+```
+
+## Type Definitions
+
+```typescript
+// src/types/auth.ts
+export type User = {
+  id: string
+  email: string | null
+  name: string | null
+  avatarUrl: string | null
+  githubId: string | null
+  githubUsername: string | null
+  lastLogin: Date | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type Session = {
+  id: string
+  userId: string
+  expiresAt: Date
+  createdAt: Date
+  userAgent: string | null
+  ipAddress: string | null
+}
+
+export type AuthState = {
+  user: User | null
+  session: Session | null
+  isAuthenticated: boolean
+  isLoading: boolean
+}
+
+export type LoginCredentials = {
+  email: string
+  password: string
+  remember?: boolean
+}
+
+export type RegisterData = {
+  email: string
+  password: string
+  name: string
+}
+
+export type AuthResponse = {
+  success: boolean
+  user?: User
+  session?: Session
+  error?: string
+}
+
+export type ProfileUpdate = {
+  name?: string
+  email?: string
+  avatar?: File
+}
+```
+
+## API Implementation
+
+```rust
+// src-tauri/src/auth.rs
+use tokio_postgres::{Client, NoTls};
+use deadpool_postgres::{Pool, Runtime};
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use uuid::Uuid;
+use serde::{Deserialize, Serialize};
+
+pub struct AuthService {
+    pool: Pool,
+}
+
+impl AuthService {
+    pub async fn register(&self, data: RegisterData) -> Result<AuthResponse> {
+        let client = self.pool.get().await?;
+        let tx = client.transaction().await?;
+
+        // Check existing user
+        if let Some(_) = tx.query_opt(
+            "SELECT id FROM users WHERE email = $1",
+            &[&data.email]
+        ).await? {
+            return Err(AuthError::EmailTaken);
+        }
+
+        // Create user with hashed password
+        let password_hash = hash_password(&data.password)?;
+        let user_id = Uuid::new_v4();
+        
+        let user = tx.query_one(
+            "INSERT INTO users (id, email, password_hash, name) 
+             VALUES ($1, $2, $3, $4)
+             RETURNING id, email, name, avatar_url, created_at",
+            &[&user_id, &data.email, &password_hash, &data.name]
+        ).await?;
+
+        // Create session
+        let session = create_session(&tx, user_id).await?;
+        
+        tx.commit().await?;
+
+        Ok(AuthResponse {
+            success: true,
+            user: Some(User::from_row(&user)),
+            session: Some(session),
+            error: None,
+        })
+    }
+
+    pub async fn login(&self, creds: LoginCredentials) -> Result<AuthResponse> {
+        let client = self.pool.get().await?;
+        
+        // Get user and verify password
+        let user = match client.query_opt(
+            "SELECT id, password_hash FROM users WHERE email = $1",
+            &[&creds.email]
+        ).await? {
+            Some(row) => row,
+            None => return Err(AuthError::InvalidCredentials),
+        };
+
+        let password_hash: String = user.get(1);
+        if !verify_password(&creds.password, &password_hash)? {
+            return Err(AuthError::InvalidCredentials);
+        }
+
+        let user_id: Uuid = user.get(0);
+
+        // Create session
+        let session = create_session(&client, user_id).await?;
+
+        // Update last login
+        client.execute(
+            "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1",
+            &[&user_id]
+        ).await?;
+
+        // If remember me, create long-lived refresh token
+        if creds.remember {
+            create_remember_token(&client, user_id).await?;
+        }
+
+        Ok(AuthResponse {
+            success: true,
+            user: Some(get_user_by_id(&client, user_id).await?),
+            session: Some(session),
+            error: None,
+        })
+    }
+
+    pub async fn github_auth(&self, code: String) -> Result<AuthResponse> {
+        let client = self.pool.get().await?;
+        let github_user = fetch_github_user(code).await?;
+
+        // Try to find existing user by GitHub ID
+        let existing_user = client.query_opt(
+            "SELECT id FROM users WHERE github_id = $1",
+            &[&github_user.id.to_string()]
+        ).await?;
+
+        let user_id = match existing_user {
+            Some(row) => row.get(0),
+            None => {
+                // Create new user
+                let user_id = Uuid::new_v4();
+                client.execute(
+                    "INSERT INTO users (id, github_id, github_username, name, avatar_url)
+                     VALUES ($1, $2, $3, $4, $5)",
+                    &[
+                        &user_id,
+                        &github_user.id.to_string(),
+                        &github_user.login,
+                        &github_user.name,
+                        &github_user.avatar_url
+                    ]
+                ).await?;
+                user_id
+            }
+        };
+
+        // Create session
+        let session = create_session(&client, user_id).await?;
+
+        Ok(AuthResponse {
+            success: true,
+            user: Some(get_user_by_id(&client, user_id).await?),
+            session: Some(session),
+            error: None,
+        })
+    }
+
+    pub async fn link_github(&self, user_id: Uuid, code: String) -> Result<User> {
+        let client = self.pool.get().await?;
+        let github_user = fetch_github_user(code).await?;
+
+        // Update user with GitHub info
+        client.execute(
+            "UPDATE users 
+             SET github_id = $1, 
+                 github_username = $2,
+                 avatar_url = COALESCE(avatar_url, $3),
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $4",
+            &[
+                &github_user.id.to_string(),
+                &github_user.login,
+                &github_user.avatar_url,
+                &user_id
+            ]
+        ).await?;
+
+        get_user_by_id(&client, user_id).await
+    }
+
+    pub async fn update_profile(&self, user_id: Uuid, data: ProfileUpdate) -> Result<User> {
+        let client = self.pool.get().await?;
+        
+        // Handle avatar upload if present
+        let avatar_url = if let Some(avatar) = data.avatar {
+            Some(upload_avatar(avatar).await?)
+        } else {
+            None
+        };
+
+        // Update user profile
+        client.execute(
+            "UPDATE users 
+             SET name = COALESCE($1, name),
+                 email = COALESCE($2, email),
+                 avatar_url = COALESCE($3, avatar_url),
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $4",
+            &[&data.name, &data.email, &avatar_url, &user_id]
+        ).await?;
+
+        get_user_by_id(&client, user_id).await
+    }
+}
+```
+
+## React Components
+
+```typescript
+// src/components/auth/LoginForm.tsx
+export function LoginForm() {
+  const { login, loginWithGithub } = useAuth()
+  const [isPending, startTransition] = useTransition()
+  const [formData, setFormData] = useState<LoginCredentials>({
+    email: '',
+    password: '',
+    remember: false
+  })
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    startTransition(async () => {
+      const result = await login(formData)
+      if (result.success) {
+        // Redirect to dashboard
+        router.push('/dashboard')
+      }
+    })
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* Form fields */}
+      <div className="flex items-center gap-2 mb-4">
+        <Checkbox
+          id="remember"
+          checked={formData.remember}
+          onCheckedChange={(checked) => 
+            setFormData({ ...formData, remember: !!checked })
+          }
+        />
+        <label htmlFor="remember">
+          Remember me
+        </label>
+      </div>
+      
+      <Button type="submit" loading={isPending}>
+        Sign In
+      </Button>
+
+      <div className="relative my-4">
+        <Divider>or continue with</Divider>
+      </div>
+
+      <Button
+        variant="outline"
+        onClick={() => startTransition(() => loginWithGithub())}
+        loading={isPending}
+      >
+        <GitHubIcon className="mr-2" />
+        GitHub
+      </Button>
+    </form>
+  )
+}
+```
+
+## Implementation Steps
+
+1. **Database Setup**
+   - Set up Neon PostgreSQL instance
+   - Run migrations
+   - Configure connection pooling
+
+2. **Backend Implementation**
+   - Implement auth service methods
+   - Set up GitHub OAuth
+   - Configure session management
+   - Add rate limiting
+
+3. **Frontend Implementation**
+   - Create auth context & hooks
+   - Build login/register forms
+   - Implement profile management
+   - Add avatar upload UI
+
+4. **Security & Performance**
+   - Add CSRF protection
+   - Configure rate limiting
+   - Implement proper error handling
+   - Add loading states & feedback
+
+5. **Testing & Deployment**
+   - Write unit tests
+   - Add E2E tests
+   - Configure CI/CD
+   - Deploy to production
+
+## Security Considerations
+
+- Password hashing with Argon2
+- CSRF protection
+- Rate limiting on auth endpoints
+- Secure session management
+- SQL injection prevention
+- XSS protection
+
+## Error Handling
+
+```typescript
+// src/lib/errors.ts
+export class AuthError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public status: number = 400
+  ) {
+    super(message)
+  }
+
+  static EmailTaken = () => 
+    new AuthError('Email already taken', 'EMAIL_TAKEN')
+  
+  static InvalidCredentials = () =>
+    new AuthError('Invalid email or password', 'INVALID_CREDENTIALS')
+  
+  static SessionExpired = () =>
+    new AuthError('Session expired', 'SESSION_EXPIRED', 401)
+}
+```
+
+## Performance Optimizations
+
+- Connection pooling
+- Proper database indexing
+- Caching where appropriate
+- Optimistic UI updates
+- Lazy loading components 

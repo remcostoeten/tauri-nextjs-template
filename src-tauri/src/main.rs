@@ -2,18 +2,39 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod version;
+mod auth;
 
 use version::{get_current_version, increment_version};
+use auth::{hash_password, verify_password, generate_session_token, check_login_rate_limit, save_avatar, RateLimiter};
 
 fn main() {
+    let rate_limiter = RateLimiter::new();
+
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_shell::init())
+        .manage(rate_limiter)
         .invoke_handler(tauri::generate_handler![
+            greet,
             get_current_version,
             increment_version,
-            get_recent_commits
+            get_recent_commits,
+            hash_password,
+            verify_password,
+            generate_session_token,
+            check_login_rate_limit,
+            save_avatar,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[tauri::command]
+fn greet() -> String {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    let now = SystemTime::now();
+    let epoch_ms = now.duration_since(UNIX_EPOCH).unwrap().as_millis();
+    format!("Hello world from Rust! Current epoch: {}", epoch_ms)
 }
 
 #[tauri::command]
