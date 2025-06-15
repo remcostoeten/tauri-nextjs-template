@@ -1,83 +1,208 @@
-'use client'
-
-/**
- *  @author Remco Stoeten
- *  @description React hook fetching git data with loading, error, and stale states.
- */
-
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import { usePlatform } from '@/shared/hooks/use-platform'
+import { noop } from '@/shared/helpers'
 
-type TGitData = {
-    latest_commit: {
-        sha: string
-        commit: {
-            message: string
+type TGitHubCommit = {
+    sha: string
+    commit: {
+        message: string
+        author: {
+            name: string
+            email: string
+            date: string
         }
-    } | null
-    recent_commits: Array<{
-        sha: string
-        commit: {
-            message: string
-        }
-    }>
-    version: {
-        display: string
     }
+    author: {
+        login: string
+        avatar_url: string
+    } | null
+}
+
+type TAppFooterData = {
+    version: string
+    latest_commit?: TGitHubCommit
+    recent_commits: TGitHubCommit[]
     is_loading: boolean
     is_error: boolean
     is_stale: boolean
     is_desktop: boolean
 }
 
-export function useGitData(): TGitData {
-    const [data, setData] = useState<TGitData>({
-        latest_commit: null,
+const CACHE_KEY = 'app_footer_commits'
+const CACHE_EXPIRY = 5 * 60 * 1000 // 5 minutes
+const GITHUB_API_BASE = 'https://api.github.com'
+const REPO_OWNER = 'remcostoeten'
+const REPO_NAME = 'tauri-nextjs-template'
+const BRANCH = 'master'
+
+export function useAppFooterData(): TAppFooterData {
+    const { isTauri } = usePlatform()
+    const [data, setData] = useState<TAppFooterData>({
+        version: '0.00',
+        latest_commit: undefined,
         recent_commits: [],
-        version: { display: '0.1.0' },
         is_loading: true,
         is_error: false,
         is_stale: false,
-        is_desktop: typeof window !== 'undefined' && '__TAURI__' in window
+        is_desktop: isTauri
     })
 
-    useEffect(() => {
-        let mounted = true
+    const isCacheValid = (timestamp: number): boolean => {
+        return Date.now() - timestamp < CACHE_EXPIRY
+    }
 
-        async function fetchData() {
+    const getCachedCommits = (): { commits: TGitHubCommit[]; timestamp: number } | null => {
+        if (typeof window === 'undefined') return null
+
+        try {
+            const cached = localStorage.getItem(CACHE_KEY)
+            if (!cached) return null
+
+            return JSON.parse(cached)
+        } catch {
+            return null
+        }
+    }
+
+    const setCachedCommits = (commits: TGitHubCommit[]): void => {
+        if (typeof window === 'undefined') return
+
+        try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({
+                commits,
+                timestamp: Date.now()
+            }))
+        } catch {
+            noop()
+        }
+    }
+
+    const fetchVersion = async (): Promise<string> => {
+        if (isTauri) {
             try {
-                const [commits, version] = await Promise.all([
-                    data.is_desktop ? invoke<TGitData['recent_commits']>('get_recent_commits') : Promise.resolve([]),
-                    data.is_desktop ? invoke<string>('get_current_version') : Promise.resolve('0.1.0')
-                ])
-
-                if (!mounted) return
-
-                setData(prev => ({
-                    ...prev,
-                    latest_commit: commits[0] || null,
-                    recent_commits: commits,
-                    version: { display: version },
-                    is_loading: false,
-                    is_error: false
-                }))
+                const version = await invoke('get_current_version') as string
+                return version
             } catch (error) {
-                console.error('Failed to fetch git data:', error)
-                if (!mounted) return
-                setData(prev => ({
-                    ...prev,
-                    is_loading: false,
-                    is_error: true
-                }))
+                console.error('Failed to fetch version from Tauri:', error)
             }
         }
 
-        void fetchData()
+        return process.env.NEXT_PUBLIC_APP_VERSION ||
+            process.env.npm_package_version ||
+            '1.0.0'
+    }
+
+    const fetchCommits = async (): Promise<TGitHubCommit[]> => {
+        const response = await fetch(
+            `${GITHUB_API_BASE}/repos/${REPO_OWNER}/${REPO_NAME}/commits?sha=${BRANCH}&per_page=10`,
+            {
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json',
+                    ...(process.env.NEXT_PUBLIC_GITHUB_TOKEN && {
+                        'Authorization': `token ${process.env.NEXT_PUBLIC_GITHUB_TOKEN}`
+                    })
+                }
+            }
+        )
+
+        if (!response.ok) {
+            throw new Error(`GitHub API error: ${response.status}`)
+        }
+
+        return response.json()
+    }
+
+    const fetchData = async (): Promise<void> => {
+        try {
+            setData(prev => ({ ...prev, is_loading: true, is_error: false }))
+
+            const version = await fetchVersion()
+
+            const cached = getCachedCommits()
+            if (cached && isCacheValid(cached.timestamp)) {
+                setData({
+                    version,
+                    latest_commit: cached.commits[0] ?? undefined,
+                    recent_commits: cached.commits,
+                    is_loading: false,
+                    is_error: false,
+                    is_stale: true,
+                    is_desktop: isTauri
+                })
+                return
+            }
+
+            const commits = await fetchCommits()
+            const latest_commit = commits[0] ?? undefined
+
+            setCachedCommits(commits)
+
+            setData({
+                version,
+                latest_commit,
+                recent_commits: commits,
+                is_loading: false,
+                is_error: false,
+                is_stale: false,
+                is_desktop: isTauri
+            })
+        } catch (error) {
+            console.error('Failed to fetch app footer data:', error)
+
+            const cached = getCachedCommits()
+            const version = await fetchVersion().catch(() => '0.00')
+
+            if (cached) {
+                setData({
+                    version,
+                    latest_commit: cached.commits[0] ?? undefined,
+                    recent_commits: cached.commits,
+                    is_loading: false,
+                    is_error: false,
+                    is_stale: true,
+                    is_desktop: isTauri
+                })
+            } else {
+                setData({
+                    version,
+                    latest_commit: undefined,
+                    recent_commits: [],
+                    is_loading: false,
+                    is_error: true,
+                    is_stale: false,
+                    is_desktop: isTauri
+                })
+            }
+        }
+    }
+
+    useEffect(() => {
+        fetchData()
+    }, [isTauri])
+
+    useEffect(() => {
+        const handleFocus = () => {
+            const cached = getCachedCommits()
+            if (!cached || !isCacheValid(cached.timestamp)) {
+                fetchData()
+            }
+        }
+
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                handleFocus()
+            }
+        }
+
+        window.addEventListener('focus', handleFocus)
+        document.addEventListener('visibilitychange', handleVisibilityChange)
 
         return () => {
-            mounted = false
+            window.removeEventListener('focus', handleFocus)
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
         }
-    }, [data.is_desktop])
+    }, [])
 
     return data
 }

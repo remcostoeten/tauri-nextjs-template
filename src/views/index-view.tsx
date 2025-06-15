@@ -1,6 +1,7 @@
 "use client";
 
 import { RoundedButton } from "@/components/_misc/RoundedButton";
+import { Button } from "@/shared/ui";
 import { invoke } from "@tauri-apps/api/core";
 import { useCallback, useState } from "react";
 
@@ -18,7 +19,7 @@ export default function IndexView() {
 
     return (
         <div className="flex flex-col gap-2 items-start">
-            <RoundedButton
+            <Button
                 onClick={greet}
                 title="Call &quot;greet&quot; from Rust"
             />

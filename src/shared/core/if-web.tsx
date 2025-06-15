@@ -5,6 +5,7 @@
 
 'use client'
 
+import React from 'react';
 import { usePlatform } from '../hooks/use-platform';
 
 

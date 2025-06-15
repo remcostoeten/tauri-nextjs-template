@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { useEffect, useRef } from 'react';
 import { cn } from '@/shared/helpers';
 

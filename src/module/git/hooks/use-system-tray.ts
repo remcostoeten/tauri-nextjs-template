@@ -6,21 +6,22 @@
 
 import { useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
-import { useGitData } from './use-git-data'
-import { noop } from '@/shared/helpers/noop'
+import { noop } from '@/shared/helpers'
+import { useAppFooterData } from './use-git-data'
 
 export function useSystemTray(): void {
-    const { version } = useGitData()
+    const { version } = useAppFooterData()
 
     useEffect(() => {
         function updateVersion(): void {
             void invoke('update_tray_version', {
-                version: version.display
+                version: version
             }).catch(noop)
         }
 
         if (typeof window !== 'undefined' && '__TAURI__' in window) {
             updateVersion()
         }
-    }, [version.display])
+        arguments
+    }, [version])
 } 
