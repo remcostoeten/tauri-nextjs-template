@@ -5,7 +5,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useGitData } from '../hooks/use-git-data'
 import { CommitTree } from './commit-tree'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { cn } from '@/shared/helpers/cn'
@@ -13,15 +12,6 @@ import { cn } from '@/shared/helpers/cn'
 export function AppFooter(): React.ReactElement | null {
     const [isHovered, setIsHovered] = useState(false)
 
-    const {
-        latest_commit,
-        recent_commits,
-        version,
-        is_loading,
-        is_error,
-        is_stale,
-        is_desktop
-    } = useGitData()
 
     if (is_error) {
         return null
