@@ -1,6 +1,5 @@
 "use client";
 
-import { RoundedButton } from "@/components/_misc/RoundedButton";
 import { Button } from "@/shared/ui";
 import { invoke } from "@tauri-apps/api/core";
 import { useCallback, useState } from "react";

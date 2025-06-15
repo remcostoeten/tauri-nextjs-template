@@ -1,0 +1,72 @@
+/* Base shimmer class for dark background */
+.shimmer {
+    position: relative;
+    overflow: hidden;
+    border-radius: 6px;
+    background-color: rgb(20, 20, 20);
+    /* slightly lighter than #0b0b0b for visibility */
+}
+
+/* Shimmer effect using ::after pseudo-element */
+.shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 150%;
+    height: 100%;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, 0.05),
+            transparent);
+    animation: shimmer-wave 1.6s linear infinite;
+    pointer-events: none;
+}
+
+/* Keyframes for shimmer movement */
+@keyframes shimmer-wave {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Lighter shimmer = higher opacity (10% to 100%) */
+.shimmer-10::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.01), transparent);
+}
+
+.shimmer-20::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.02), transparent);
+}
+
+.shimmer-30::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+}
+
+.shimmer-40::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
+}
+
+.shimmer-50::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+}
+
+.shimmer-60::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+}
+
+.shimmer-70::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+}
+
+.shimmer-80::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+}
+
+.shimmer-90::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.09), transparent);
+}
+
+.shimmer-100::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.10), transparent);
+}

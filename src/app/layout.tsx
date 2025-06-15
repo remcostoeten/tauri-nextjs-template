@@ -1,7 +1,7 @@
 'use client'
 
-import { Inter } from "next/font/google";
-import "@/styles/globals.css";
+import { Geist, Geist_Mono } from "next/font/google";
+import "../styles/globals.css";
 import { AppFooter } from "@/module/git/components/app-footer";
 import { useSystemTray } from "@/module/git/hooks/use-system-tray";
 import { Version } from '@/components/Version';
@@ -9,7 +9,15 @@ import { Providers } from "@/components/providers";
 import { Toaster } from '@/shared/ui/toast';
 import { useAppFooterData } from "@/module/git/hooks";
 
-const inter = Inter({ subsets: ["latin"] });
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export default function RootLayout({
   children,
@@ -20,8 +28,8 @@ export default function RootLayout({
   useSystemTray();
 
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className="dark " suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <Providers>
           {children}
           <AppFooter

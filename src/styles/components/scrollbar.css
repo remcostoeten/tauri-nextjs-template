@@ -1,0 +1,24 @@
+/* For Webkit browsers like Chrome, Safari */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #202020;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #222;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #222;
+}
+
+/* For Firefox */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: #333 #202020;
+}
