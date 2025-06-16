@@ -1,15 +1,23 @@
-import { pgTable, uuid, varchar, text, timestamp, boolean, integer } from "drizzle-orm/pg-core"
+import {
+  sqliteTable,
+  text,
+  integer,
+  primaryKey
+} from "drizzle-orm/sqlite-core"
+import { sql } from "drizzle-orm"
 
-export const projects = pgTable("projects", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
+export const projects = sqliteTable("projects", {
+  id: text("id").primaryKey().default(sql`lower(hex(randomblob(16)))`), // UUID alternative
+  name: text("name").notNull(),
   description: text("description"),
-  color: varchar("color", { length: 7 }).default("#f76808"),
-  icon: varchar("icon", { length: 50 }).default("Folder"),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  color: text("color").default("#f76808"),
+  icon: text("icon").default("Folder"),
+  isActive: integer("is_active", { mode: "boolean" }).default(true),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`)
 })
 
+
+// Types
 export type t_project = typeof projects.$inferSelect
 export type t_new_project = typeof projects.$inferInsert

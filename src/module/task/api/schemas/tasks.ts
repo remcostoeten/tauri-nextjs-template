@@ -1,52 +1,23 @@
-import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
-import { projects } from '@/api/db/schema';
+import {
+    sqliteTable,
+    text
+} from "drizzle-orm/sqlite-core"
+import { sql } from "drizzle-orm"
+import { projects } from "@/module/projects/api/schema/project-schema"
 
-export const taskSections = sqliteTable('task_sections', {
-    id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-    title: text('title').notNull(),
-    projectId: text('project_id').references(() => projects.id).notNull(),
-    order: integer('order').notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
+export const tasks = sqliteTable("tasks", {
+    id: text("id").primaryKey().default(sql`lower(hex(randomblob(16)))`),
+    title: text("title").notNull(),
+    description: text("description"),
+    status: text("status").default("todo").notNull(),
+    priority: text("priority").default("medium").notNull(),
+    projectId: text("project_id").references(() => projects.id),
+    assigneeId: text("assignee_id"),
+    dueDate: text("due_date"),
+    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`)
+})
 
-export const taskLabels = sqliteTable('task_labels', {
-    id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-    name: text('name').notNull(),
-    color: text('color').notNull(),
-    projectId: text('project_id').references(() => projects.id).notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-export const taskLabelAssignments = sqliteTable('task_label_assignments', {
-    id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-    taskId: text('task_id').references(() => tasks.id).notNull(),
-    labelId: text('label_id').references(() => taskLabels.id).notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-export const tasks = sqliteTable('tasks', {
-    id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-    title: text('title').notNull(),
-    description: text('description'),
-    status: text('status').notNull().default('todo'),
-    priority: text('priority').notNull().default('medium'),
-    projectId: text('project_id').references(() => projects.id).notNull(),
-    sectionId: text('section_id').references(() => taskSections.id),
-    assigneeId: text('assignee_id'),
-    order: integer('order').notNull().default(0),
-    dueDate: integer('due_date', { mode: 'timestamp' }),
-    completedAt: integer('completed_at', { mode: 'timestamp' }),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-export const taskComments = sqliteTable('task_comments', {
-    id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-    taskId: text('task_id').references(() => tasks.id).notNull(),
-    userId: text('user_id').notNull(),
-    content: text('content').notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-}); 
+export type t_task = typeof tasks.$inferSelect
+export type t_new_task = typeof tasks.$inferInsert
+  

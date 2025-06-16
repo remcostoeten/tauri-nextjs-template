@@ -1,19 +1,18 @@
-import { pgTable, uuid, varchar, timestamp, boolean, integer } from "drizzle-orm/pg-core";
-import { projects } from "@/module/project/api/schemas/projects";
+import { projects } from "@/api/db/schema"
+import { sql } from "drizzle-orm"
+import { integer, text } from "drizzle-orm/sqlite-core"
+import { sqliteTable } from "drizzle-orm/sqlite-core"
 
-export const navigationPreferences = pgTable("navigation_preferences", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  projectId: uuid("project_id")
-    .references(() => projects.id)
-    .notNull(),
-  itemId: varchar("item_id", { length: 255 }).notNull(),
-  isVisible: boolean("is_visible").default(true),
+export const navigationPreferences = sqliteTable("navigation_preferences", {
+  id: text("id").primaryKey().default(sql`lower(hex(randomblob(16)))`),
+  projectId: text("project_id").notNull().references(() => projects.id),
+  itemId: text("item_id").notNull(),
+  isVisible: integer("is_visible").notNull().default(1),
   position: integer("position").notNull(),
-  customLabel: varchar("custom_label", { length: 255 }),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+  customLabel: text("custom_label"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`)
+})
 
-export type t_navigation_preference = typeof navigationPreferences.$inferSelect;
-export type t_new_navigation_preference = typeof navigationPreferences.$inferInsert;
-
+export type t_navigation_preference = typeof navigationPreferences.$inferSelect
+export type t_new_navigation_preference = typeof navigationPreferences.$inferInsert
