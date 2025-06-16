@@ -6,6 +6,7 @@ import { Button } from '@/shared/ui/button'
 import { Badge } from '@/shared/ui/badge'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { Card, CardContent } from '@/shared/ui/card'
+import { useAppFooterData } from '@/module/git/hooks'
 
 type TCommit = {
     sha: string
@@ -93,27 +94,17 @@ function CommitTree({ commits, is_stale }: { commits?: TCommit[], is_stale?: boo
     )
 }
 
-type TProps = {
-    version?: string
-    projectName?: string
-    latest_commit?: TCommit
-    recent_commits?: TCommit[]
-    is_loading?: boolean
-    is_error?: boolean
-    is_stale?: boolean
-    is_desktop?: boolean
-}
-
-export function AppFooter({
-    version = '1.0.0',
-    projectName = 'Skibidado',
-    latest_commit,
-    recent_commits = [],
-    is_loading = false,
-    is_error = false,
-    is_stale = false,
-    is_desktop = true
-}: TProps) {
+export function AppFooter() {
+    const {
+        version,
+        latest_commit,
+        recent_commits,
+        is_loading,
+        is_error,
+        is_stale,
+        is_desktop
+    } = useAppFooterData();
+    
     const [isHovered, setIsHovered] = useState(false)
 
     if (is_error) {
@@ -124,7 +115,6 @@ export function AppFooter({
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50">
-            {/* Hover popup */}
             <div
                 className={`absolute bottom-full left-4 right-4 md:left-8 md:right-auto md:max-w-md transform transition-all duration-300 ease-out ${
                     isHovered && recent_commits.length > 0
@@ -154,7 +144,7 @@ export function AppFooter({
                         <div className="flex items-center gap-3 md:gap-4">
                             <div className="flex items-center gap-2">
                                 <GitCommit className="w-4 h-4 text-primary" />
-                                <span className="font-semibold text-foreground hidden sm:inline">{projectName}</span>
+                                <span className="font-semibold text-foreground hidden sm:inline">Skibidado</span>
                             </div>
 
                             <div className="flex items-center gap-2 md:gap-3">

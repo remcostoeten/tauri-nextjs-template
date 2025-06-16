@@ -38,3 +38,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 .env
+
+# local database files
+*.db
+*.db-journal

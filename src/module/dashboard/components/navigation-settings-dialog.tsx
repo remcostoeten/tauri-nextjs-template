@@ -18,54 +18,71 @@ import { Button } from "@/shared/ui/button"
 import { Input } from "@/shared/ui/input"
 import { Label } from "@/shared/ui/label"
 import { Switch } from "@/shared/ui/switch"
-import { GripVertical, Eye, EyeOff, Edit2, Check, X } from "lucide-react"
-import type { t_navigation_item } from "../types/sidebar-types"
+import { GripVertical, Eye, EyeOff, Edit2, Check, X, Star } from "lucide-react"
+import type { TNavigationItem } from "../types/sidebar-types"
+import { cn } from "@/shared/lib/utils"
 
-type NavigationItem = t_navigation_item & {
-  isVisible: boolean
-  position: number
-  customLabel?: string
-}
+type NavigationItem = {
+  id: string;
+  title: string;
+  icon: string;
+  href: string;
+  isVisible: boolean;
+  isFavorite: boolean;
+  position: number;
+  customLabel?: string;
+};
 
 type NavigationSettingsDialogProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  navigationItems: t_navigation_item[]
-  onSave: (
-    preferences: Array<{ itemId: string; isVisible: boolean; position: number; customLabel?: string }>,
-  ) => Promise<void>
-  currentPreferences: Array<{ itemId: string; isVisible: boolean; position: number; customLabel?: string }>
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  navigationItems: TNavigationItem[];
+  onSave: (preferences: {
+    itemId: string;
+    isVisible: boolean;
+    isFavorite: boolean;
+    position: number;
+    customLabel?: string;
+  }[]) => Promise<void>;
+  currentPreferences: {
+    itemId: string;
+    isVisible: boolean;
+    isFavorite: boolean;
+    position: number;
+    customLabel?: string;
+  }[];
+};
 
 function SortableNavigationItem({
   item,
   onToggleVisibility,
+  onToggleFavorite,
   onUpdateLabel,
 }: {
   item: NavigationItem
   onToggleVisibility: (id: string) => void
+  onToggleFavorite: (id: string) => void
   onUpdateLabel: (id: string, label: string) => void
 }) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editLabel, setEditLabel] = useState(item.customLabel || item.title)
-
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: item.id,
-  })
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id })
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   }
 
-  function handleSaveLabel() {
-    onUpdateLabel(item.id, editLabel)
-    setIsEditing(false)
-  }
+  const [isEditing, setIsEditing] = useState(false)
+  const [label, setLabel] = useState(item.customLabel || item.title)
 
-  function handleCancelEdit() {
-    setEditLabel(item.customLabel || item.title)
+  const handleLabelSave = () => {
+    onUpdateLabel(item.id, label)
     setIsEditing(false)
   }
 
@@ -73,57 +90,87 @@ function SortableNavigationItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-3 bg-[#2a2a2a] rounded-lg border ${
-        item.isVisible ? "border-[#3a3a3a]" : "border-[#3a3a3a]/50"
-      } ${isDragging ? "shadow-lg" : ""}`}
+      {...attributes}
+      className={cn(
+        "flex items-center gap-3 p-3 bg-[#2a2a2a] rounded-lg",
+        isDragging && "opacity-50"
+      )}
     >
-      <div
-        {...attributes}
+      <button
         {...listeners}
         className="cursor-grab active:cursor-grabbing text-[#b4b4b4] hover:text-white"
       >
         <GripVertical className="size-4" />
-      </div>
+      </button>
 
-      <div className="flex items-center gap-2">
-        <Switch checked={item.isVisible} onCheckedChange={() => onToggleVisibility(item.id)} />
-        {item.isVisible ? <Eye className="size-4 text-green-400" /> : <EyeOff className="size-4 text-[#b4b4b4]" />}
-      </div>
-
-      <div className="flex-1">
+      <div className="flex items-center gap-3 flex-1">
         {isEditing ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1">
             <Input
-              value={editLabel}
-              onChange={(e) => setEditLabel(e.target.value)}
-              className="bg-[#1a1a1a] border-[#3a3a3a] text-white text-sm"
-              placeholder="Enter custom label..."
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              className="h-8 bg-[#1a1a1a] border-[#3a3a3a]"
             />
-            <Button size="sm" onClick={handleSaveLabel} className="bg-green-600 hover:bg-green-700 p-1">
-              <Check className="size-3" />
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleLabelSave}
+              className="h-8 px-2 hover:bg-[#3a3a3a]"
+            >
+              <Check className="size-4" />
             </Button>
-            <Button size="sm" variant="outline" onClick={handleCancelEdit} className="border-[#3a3a3a] p-1">
-              <X className="size-3" />
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setLabel(item.customLabel || item.title)
+                setIsEditing(false)
+              }}
+              className="h-8 px-2 hover:bg-[#3a3a3a]"
+            >
+              <X className="size-4" />
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <span className={`text-sm ${item.isVisible ? "text-white" : "text-[#b4b4b4]"}`}>
-              {item.customLabel || item.title}
-            </span>
+          <>
+            <span className="flex-1">{item.customLabel || item.title}</span>
             <Button
               size="sm"
               variant="ghost"
               onClick={() => setIsEditing(true)}
-              className="p-1 h-auto text-[#b4b4b4] hover:text-white"
+              className="h-8 w-8 p-0 hover:bg-[#3a3a3a]"
             >
-              <Edit2 className="size-3" />
+              <Edit2 className="size-4" />
             </Button>
-          </div>
+          </>
         )}
       </div>
 
-      <div className="text-xs text-[#b4b4b4] min-w-[3rem] text-right">#{item.position + 1}</div>
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => onToggleFavorite(item.id)}
+          className={cn(
+            "h-8 w-8 p-0 hover:bg-[#3a3a3a]",
+            item.isFavorite && "text-[#f76808]"
+          )}
+        >
+          <Star className="size-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => onToggleVisibility(item.id)}
+          className="h-8 w-8 p-0 hover:bg-[#3a3a3a]"
+        >
+          {item.isVisible ? (
+            <Eye className="size-4" />
+          ) : (
+            <EyeOff className="size-4" />
+          )}
+        </Button>
+      </div>
     </div>
   )
 }
@@ -156,6 +203,7 @@ export function NavigationSettingsDialog({
         return {
           ...item,
           isVisible: pref?.isVisible ?? true,
+          isFavorite: pref?.isFavorite ?? false,
           position: pref?.position ?? index,
           customLabel: pref?.customLabel,
         }
@@ -171,14 +219,14 @@ export function NavigationSettingsDialog({
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
 
-    if (active.id !== over?.id) {
+    if (over && active.id !== over.id) {
       setItems((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id)
-        const newIndex = items.findIndex((item) => item.id === over?.id)
-
-        const newItems = arrayMove(items, oldIndex, newIndex)
-        // Update positions
-        return newItems.map((item, index) => ({ ...item, position: index }))
+        const oldIndex = items.findIndex((i) => i.id === active.id)
+        const newIndex = items.findIndex((i) => i.id === over.id)
+        return arrayMove(items, oldIndex, newIndex).map((item, index) => ({
+          ...item,
+          position: index,
+        }))
       })
     }
   }
@@ -187,9 +235,13 @@ export function NavigationSettingsDialog({
     setItems((items) => items.map((item) => (item.id === id ? { ...item, isVisible: !item.isVisible } : item)))
   }
 
+  function handleToggleFavorite(id: string) {
+    setItems((items) => items.map((item) => (item.id === id ? { ...item, isFavorite: !item.isFavorite } : item)))
+  }
+
   function handleUpdateLabel(id: string, label: string) {
     setItems((items) =>
-      items.map((item) => (item.id === id ? { ...item, customLabel: label !== item.title ? label : undefined } : item)),
+      items.map((item) => (item.id === id ? { ...item, customLabel: label } : item)),
     )
   }
 
@@ -201,6 +253,7 @@ export function NavigationSettingsDialog({
       const preferences = items.map((item) => ({
         itemId: item.id,
         isVisible: item.isVisible,
+        isFavorite: item.isFavorite,
         position: item.position,
         customLabel: item.customLabel,
       }))
@@ -219,6 +272,7 @@ export function NavigationSettingsDialog({
     const resetItems: NavigationItem[] = navigationItems.map((item, index) => ({
       ...item,
       isVisible: true,
+      isFavorite: false,
       position: index,
       customLabel: undefined,
     }))
@@ -231,7 +285,7 @@ export function NavigationSettingsDialog({
       <DialogContent className="bg-[#1a1a1a] border-[#2a2a2a] text-white max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Customize Navigation</DialogTitle>
-          <p className="text-sm text-[#b4b4b4]">Drag to reorder, toggle visibility, and customize labels</p>
+          <p className="text-sm text-[#b4b4b4]">Drag to reorder, toggle visibility, favorites, and customize labels</p>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-4">
@@ -249,6 +303,7 @@ export function NavigationSettingsDialog({
                       key={item.id}
                       item={item}
                       onToggleVisibility={handleToggleVisibility}
+                      onToggleFavorite={handleToggleFavorite}
                       onUpdateLabel={handleUpdateLabel}
                     />
                   ))}
@@ -261,7 +316,8 @@ export function NavigationSettingsDialog({
             <strong>Tips:</strong>
             <ul className="mt-1 space-y-1">
               <li>• Drag items to reorder them</li>
-              <li>• Toggle the switch to show/hide items</li>
+              <li>• Toggle the eye icon to show/hide items</li>
+              <li>• Toggle the star icon to favorite items</li>
               <li>• Click the edit icon to customize labels</li>
               <li>• Hidden items won't appear in the sidebar</li>
             </ul>

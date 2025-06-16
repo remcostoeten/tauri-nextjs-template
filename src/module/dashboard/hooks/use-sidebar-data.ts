@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import type { tSidebarData } from "../types/sidebar-types"
+import type { TSidebarData } from "../types/sidebar-types"
 import { getSidebarData } from "../repositories/sidebar-repository"
 
 export function useSidebarData() {
-  const [data, setData] = useState<tSidebarData | null>(null)
+  const [data, setData] = useState<TSidebarData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 

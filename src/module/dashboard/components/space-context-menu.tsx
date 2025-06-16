@@ -1,94 +1,90 @@
-'use client';
+"use client"
 
-import * as React from 'react';
+import type * as React from "react"
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuTrigger,
-} from '@/shared/ui/context-menu';
-import {
-  Pencil,
-  Copy,
-  Star,
-  Share2,
-  Lock,
-  Settings,
-  Trash2,
-} from 'lucide-react';
-import type { t_space } from '../types/sidebar-types';
+} from "@/shared/ui/context-menu"
+import { Edit, Trash2, Copy, Star, Settings, Users, Lock } from "lucide-react"
+import type { TSpace } from "../types/sidebar-types"
 
-type Props = {
-  space: t_space;
-  onAction: (action: string, spaceId: string) => void;
-  children: React.ReactNode;
-};
+type SpaceContextMenuProps = {
+  space: TSpace
+  children: React.ReactNode
+  onAction: (action: string, spaceId: string) => void
+}
 
-export function SpaceContextMenu({ space, onAction, children }: Props) {
+export function SpaceContextMenu({ space, children, onAction }: SpaceContextMenuProps) {
+  function handleAction(action: string) {
+    onAction(action, space.id)
+  }
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      <ContextMenuContent className="w-48 bg-[#1a1a1a] border-[#2a2a2a]">
+      <ContextMenuContent className="w-48 bg-[#1a1a1a] border-[#2a2a2a] text-white">
         <ContextMenuItem
-          className="cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] text-sm"
-          onClick={() => onAction('open', space.id)}
+          onClick={() => handleAction("open")}
+          className="hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer"
         >
-          <span>Open Space</span>
+          Open Space
         </ContextMenuItem>
         <ContextMenuSeparator className="bg-[#2a2a2a]" />
         <ContextMenuItem
-          className="cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] text-sm"
-          onClick={() => onAction('rename', space.id)}
+          onClick={() => handleAction("rename")}
+          className="hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer"
         >
-          <Pencil className="mr-2 size-3.5" />
-          <span>Rename</span>
+          <Edit className="size-4 mr-2" />
+          Rename
         </ContextMenuItem>
         <ContextMenuItem
-          className="cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] text-sm"
-          onClick={() => onAction('duplicate', space.id)}
+          onClick={() => handleAction("duplicate")}
+          className="hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer"
         >
-          <Copy className="mr-2 size-3.5" />
-          <span>Duplicate</span>
+          <Copy className="size-4 mr-2" />
+          Duplicate
         </ContextMenuItem>
         <ContextMenuItem
-          className="cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] text-sm"
-          onClick={() => onAction('favorite', space.id)}
+          onClick={() => handleAction("favorite")}
+          className="hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer"
         >
-          <Star className="mr-2 size-3.5" />
-          <span>Add to Favorites</span>
-        </ContextMenuItem>
-        <ContextMenuSeparator className="bg-[#2a2a2a]" />
-        <ContextMenuItem
-          className="cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] text-sm"
-          onClick={() => onAction('share', space.id)}
-        >
-          <Share2 className="mr-2 size-3.5" />
-          <span>Share</span>
-        </ContextMenuItem>
-        <ContextMenuItem
-          className="cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] text-sm"
-          onClick={() => onAction('permissions', space.id)}
-        >
-          <Lock className="mr-2 size-3.5" />
-          <span>Permissions</span>
-        </ContextMenuItem>
-        <ContextMenuItem
-          className="cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] text-sm"
-          onClick={() => onAction('settings', space.id)}
-        >
-          <Settings className="mr-2 size-3.5" />
-          <span>Settings</span>
+          <Star className="size-4 mr-2" />
+          Add to Favorites
         </ContextMenuItem>
         <ContextMenuSeparator className="bg-[#2a2a2a]" />
         <ContextMenuItem
-          className="cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] text-sm text-red-500 focus:text-red-500"
-          onClick={() => onAction('delete', space.id)}
+          onClick={() => handleAction("share")}
+          className="hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer"
         >
-          <Trash2 className="mr-2 size-3.5" />
-          <span>Delete</span>
+          <Users className="size-4 mr-2" />
+          Share
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => handleAction("permissions")}
+          className="hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer"
+        >
+          <Lock className="size-4 mr-2" />
+          Permissions
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => handleAction("settings")}
+          className="hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer"
+        >
+          <Settings className="size-4 mr-2" />
+          Settings
+        </ContextMenuItem>
+        <ContextMenuSeparator className="bg-[#2a2a2a]" />
+        <ContextMenuItem
+          onClick={() => handleAction("delete")}
+          className="hover:bg-red-600 focus:bg-red-600 cursor-pointer text-red-400 hover:text-white focus:text-white"
+        >
+          <Trash2 className="size-4 mr-2" />
+          Delete
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
-  );
-} 
+  )
+}

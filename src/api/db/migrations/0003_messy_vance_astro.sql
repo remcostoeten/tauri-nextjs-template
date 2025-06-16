@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `navigation_preferences_project_id_item_id_unique` ON `navigation_preferences` (`project_id`,`item_id`);

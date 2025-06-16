@@ -6,9 +6,10 @@
 
 // Database schemas
 export * from '@/module/authentication/api/schemas';
-export * from '@/module/projects/api/schema/project-schema';
+export * from '@/module/project/api/schema/project-schema';
 export * from '@/module/dashboard/api/schema/navigation-preferences-schema';
-export * from '@/module/task/api/schemas/tasks';
+export * from '@/api/db/schema/tasks';
+export { taskSections } from '@/api/db/schema/task-sections';
 
 // Type definitions
 export * from '@/typings/base';
@@ -22,24 +23,24 @@ export * from '@/schemas';
 
 // Ensure all types are properly namespaced to avoid conflicts
 export type {
-    t_project,
-    t_new_project,
-} from '@/module/projects/api/schema/project-schema';
+    TProject,
+    TNewProject,
+} from '@/module/project/api/schema/project-schema';
 
 export type {
-    t_navigation_preference,
-    t_new_navigation_preference,
+    TNavigationPreference,
+    TNewNavigationPreference,
 } from '@/module/dashboard/api/schema/navigation-preferences-schema';
 
 export type {
-    t_task,
-    t_new_task,
-} from '@/module/task/api/schemas/tasks';
+    TTask,
+    TNewTask,
+} from '@/api/db/schema/tasks';
 
 export type {
-    t_notification,
-    t_navigation_item,
-    t_workspace,
-    t_space,
-    t_sidebar_data,
+    TNotification,
+    TNavigationItem,
+    TWorkspace,
+    TSpace,
+    TSidebarData,
 } from '@/module/dashboard/types/sidebar-types';

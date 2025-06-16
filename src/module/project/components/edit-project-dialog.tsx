@@ -9,7 +9,7 @@ import { Input } from "@/shared/ui/input"
 import { Textarea } from "@/shared/ui/textarea"
 import { Label } from "@/shared/ui/label"
 import { Folder, Rocket, Brain, Target, Zap, Star } from "lucide-react"
-import { t_project, t_new_project } from "@/module/projects/api/schema/project-schema"
+import type { TProject, TNewProject } from "@/module/project/api/schema/project-schema"
 
 const projectColors = ["#f76808", "#e93d82", "#5842c8", "#35b979", "#ffcb47", "#ff6b6b", "#4ecdc4", "#45b7d1"]
 
@@ -25,8 +25,8 @@ const projectIcons = [
 type EditProjectDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  project: t_project | null
-  onUpdateProject: (id: string, updates: Partial<t_new_project>) => Promise<any>
+  project: TProject | null
+  onUpdateProject: (id: string, updates: Partial<TNewProject>) => Promise<any>
 }
 
 export function EditProjectDialog({ open, onOpenChange, project, onUpdateProject }: EditProjectDialogProps) {
@@ -36,7 +36,6 @@ export function EditProjectDialog({ open, onOpenChange, project, onUpdateProject
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({ name: "", description: "" })
 
-  // Initialize form when project changes
   useEffect(() => {
     if (project && open) {
       setFormData({
@@ -49,7 +48,6 @@ export function EditProjectDialog({ open, onOpenChange, project, onUpdateProject
     }
   }, [project, open])
 
-  // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
       setError(null)
@@ -73,7 +71,7 @@ export function EditProjectDialog({ open, onOpenChange, project, onUpdateProject
     }
 
     try {
-      const updates: Partial<t_new_project> = {
+      const updates: Partial<TNewProject> = {
         name: name.trim(),
         description: description.trim() || null,
         color: selectedColor,

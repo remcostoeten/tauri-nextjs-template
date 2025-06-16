@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { TProject } from '@/typings/project';
+import { TProject, TNewProject } from '@/module/project/api/schema/project-schema';
 import {
     Card,
     CardContent,
@@ -19,6 +19,10 @@ import { toast } from '@/shared/ui';
 export function ProjectList() {
     const [projects, setProjects] = useState<TProject[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showCreateDialog, setShowCreateDialog] = useState(false);
+    const [showEditDialog, setShowEditDialog] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [selectedProject, setSelectedProject] = useState<TProject | null>(null);
 
     async function fetchProjects() {
         try {
@@ -35,6 +39,59 @@ export function ProjectList() {
         }
     }
 
+    async function handleCreateProject(project: TNewProject) {
+        try {
+            const response = await fetch('/api/projects', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(project),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to create project');
+            }
+            await fetchProjects();
+        } catch (error) {
+            toast.error('Failed to create project');
+            throw error;
+        }
+    }
+
+    async function handleUpdateProject(id: string, updates: Partial<TNewProject>) {
+        try {
+            const response = await fetch(`/api/projects/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updates),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to update project');
+            }
+            await fetchProjects();
+        } catch (error) {
+            toast.error('Failed to update project');
+            throw error;
+        }
+    }
+
+    async function handleDeleteProject(id: string) {
+        try {
+            const response = await fetch(`/api/projects/${id}`, {
+                method: 'DELETE',
+            });
+            if (!response.ok) {
+                throw new Error('Failed to delete project');
+            }
+            await fetchProjects();
+        } catch (error) {
+            toast.error('Failed to delete project');
+            throw error;
+        }
+    }
+
     useEffect(() => {
         fetchProjects();
     }, []);
@@ -47,7 +104,11 @@ export function ProjectList() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold">Projects</h2>
-                <CreateProjectDialog onProjectCreated={fetchProjects} />
+                <CreateProjectDialog
+                    open={showCreateDialog}
+                    onOpenChange={setShowCreateDialog}
+                    onCreateProject={handleCreateProject}
+                />
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {projects.map((project) => (
@@ -63,12 +124,22 @@ export function ProjectList() {
                         </CardContent>
                         <CardFooter className="flex justify-end space-x-2">
                             <EditProjectDialog
+                                open={showEditDialog && selectedProject?.id === project.id}
+                                onOpenChange={(open) => {
+                                    setShowEditDialog(open);
+                                    if (!open) setSelectedProject(null);
+                                }}
                                 project={project}
-                                onProjectUpdated={fetchProjects}
+                                onUpdateProject={handleUpdateProject}
                             />
                             <DeleteProjectDialog
+                                open={showDeleteDialog && selectedProject?.id === project.id}
+                                onOpenChange={(open) => {
+                                    setShowDeleteDialog(open);
+                                    if (!open) setSelectedProject(null);
+                                }}
                                 project={project}
-                                onProjectDeleted={fetchProjects}
+                                onDeleteProject={handleDeleteProject}
                             />
                             <Button variant="outline" asChild>
                                 <a href={`/dashboard/projects/${project.id}`}>

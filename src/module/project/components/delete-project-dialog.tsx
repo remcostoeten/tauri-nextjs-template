@@ -4,12 +4,12 @@ import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/ui/dialog"
 import { Button } from "@/shared/ui/button"
 import { AlertTriangle } from "lucide-react"
-import { t_project } from "@/module/projects/api/schema/project-schema"
+import { TProject } from "@/module/project/api/schema/project-schema"
 
 type DeleteProjectDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  project: t_project | null
+  project: TProject | null
   onDeleteProject: (id: string) => Promise<void>
 }
 

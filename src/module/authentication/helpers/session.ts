@@ -2,8 +2,9 @@
 
 import { db } from '@/api/db/connection';
 import { cookies } from 'next/headers';
-import { sessions } from '@/api/db/schema';
+import { sessions, users } from '@/api/db/schema';
 import { signJWT, verifyJWT } from './jwt';
+import { eq } from 'drizzle-orm';
 
 const COOKIE_NAME = 'auth_token';
 const COOKIE_OPTIONS = {
@@ -19,11 +20,13 @@ export async function createSession(user: {
 	id: string;
 	email: string;
 	name?: string;
+	avatar?: string;
 }) {
 	const token = await signJWT({
 		sub: user.id,
 		email: user.email,
 		...(user.name && { name: user.name }),
+		...(user.avatar && { avatar: user.avatar }),
 	});
 
 	const expiresAt = new Date();
@@ -57,10 +60,21 @@ export async function getSession() {
 		return null;
 	}
 
-	// Map JWT payload to session format
+	const user = await db
+		.select()
+		.from(users)
+		.where(eq(users.id, payload.sub as string))
+		.limit(1);
+
+	if (!user.length) {
+		cookieStore.delete(COOKIE_NAME);
+		return null;
+	}
+
 	return {
-		id: payload.sub as string,
-		email: payload.email as string,
-		name: payload.name as string,
+		id: user[0].id,
+		email: user[0].email,
+		name: user[0].name,
+		avatar: user[0].avatar,
 	};
 }

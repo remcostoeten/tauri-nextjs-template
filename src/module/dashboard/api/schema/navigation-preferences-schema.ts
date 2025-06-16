@@ -1,7 +1,6 @@
-import { projects } from "@/api/db/schema"
+import { projects } from "@/module/project/api/schema/project-schema"
 import { sql } from "drizzle-orm"
-import { integer, text } from "drizzle-orm/sqlite-core"
-import { sqliteTable } from "drizzle-orm/sqlite-core"
+import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core"
 
 export const navigationPreferences = sqliteTable("navigation_preferences", {
   id: text("id").primaryKey().default(sql`lower(hex(randomblob(16)))`),
@@ -9,10 +8,13 @@ export const navigationPreferences = sqliteTable("navigation_preferences", {
   itemId: text("item_id").notNull(),
   isVisible: integer("is_visible").notNull().default(1),
   position: integer("position").notNull(),
+  isFavorite: integer("is_favorite").notNull().default(0),
   customLabel: text("custom_label"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`)
-})
+}, (table) => ({
+  projectItemUnique: unique().on(table.projectId, table.itemId)
+}))
 
-export type t_navigation_preference = typeof navigationPreferences.$inferSelect
-export type t_new_navigation_preference = typeof navigationPreferences.$inferInsert
+export type TNavigationPreference = typeof navigationPreferences.$inferSelect
+export type TNewNavigationPreference = typeof navigationPreferences.$inferInsert

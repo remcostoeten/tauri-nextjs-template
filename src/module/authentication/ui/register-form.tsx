@@ -10,8 +10,9 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
-import { Button, Card, CardContent, Input, Label, useToast } from '@/shared/ui';
+import { Button, Card, CardContent, Input, Label } from '@/shared/ui';
 import { cn } from '@/shared/helpers';
+import { toast } from 'sonner';
 
 function RegisterButton() {
     const { pending } = useFormStatus();
@@ -27,7 +28,6 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<'div'
     const formRef = useRef<HTMLFormElement>(null);
     const router = useRouter();
     const searchParams = useSearchParams();
-    const toast = useToast();
 
     useEffect(() => {
         const toastType = searchParams.get('toast');
@@ -45,7 +45,7 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<'div'
             url.searchParams.delete('error');
             window.history.replaceState({}, '', url);
         }
-    }, [searchParams, toast]);
+    }, [searchParams]);
 
     async function handleSubmit(formData: FormData) {
         try {
@@ -62,8 +62,7 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<'div'
         } catch (e) {
             if (e instanceof Error && e.message.includes('NEXT_REDIRECT')) return;
             toast.error(
-                `Registration failed - ${e instanceof Error ? e.message : 'An unexpected error occurred'
-                }`
+                `Registration failed - ${e instanceof Error ? e.message : 'An unexpected error occurred'}`
             );
             formRef.current?.reset();
         }

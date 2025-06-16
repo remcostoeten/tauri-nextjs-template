@@ -1,6 +1,5 @@
 "use client"
 
-import { ShimmerSkeleton } from "./shimmer-skeleton"
 import {
   Sidebar,
   SidebarContent,
@@ -13,6 +12,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/shared/ui/sidebar"
+import { ShimmerSkeleton } from "./shimmer-skeleton"
 
 export function EnhancedSidebarSkeleton() {
   return (

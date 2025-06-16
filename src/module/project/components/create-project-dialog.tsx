@@ -9,7 +9,7 @@ import { Input } from "@/shared/ui/input"
 import { Textarea } from "@/shared/ui/textarea"
 import { Label } from "@/shared/ui/label"
 import { Folder, Rocket, Brain, Target, Zap, Star } from "lucide-react"
-import { t_new_project } from "@/module/projects/api/schema/project-schema"
+import {  TNewProject } from "@/module/project/api/schema/project-schema"
 
 const projectColors = ["#f76808", "#e93d82", "#5842c8", "#35b979", "#ffcb47", "#ff6b6b", "#4ecdc4", "#45b7d1"]
 
@@ -25,7 +25,7 @@ const projectIcons = [
 type CreateProjectDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onCreateProject: (project: t_new_project) => Promise<any>
+  onCreateProject: (project: TNewProject) => Promise<any>
 }
 
 export function CreateProjectDialog({ open, onOpenChange, onCreateProject }: CreateProjectDialogProps) {
@@ -35,7 +35,6 @@ export function CreateProjectDialog({ open, onOpenChange, onCreateProject }: Cre
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({ name: "", description: "" })
 
-  // Reset form when dialog opens/closes
   useEffect(() => {
     if (!open) {
       setFormData({ name: "", description: "" })
@@ -60,7 +59,7 @@ export function CreateProjectDialog({ open, onOpenChange, onCreateProject }: Cre
     }
 
     try {
-      const projectData: t_new_project = {
+      const projectData: TNewProject = {
         name: name.trim(),
         description: description.trim() || null,
         color: selectedColor,
@@ -69,7 +68,6 @@ export function CreateProjectDialog({ open, onOpenChange, onCreateProject }: Cre
 
       await onCreateProject(projectData)
 
-      // Reset form state and close dialog
       setFormData({ name: "", description: "" })
       setSelectedColor(projectColors[0])
       setSelectedIcon(projectIcons[0].name)

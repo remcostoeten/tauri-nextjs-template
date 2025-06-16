@@ -3,13 +3,8 @@
 import React from "react"
 
 import { Home, ChevronRight } from "lucide-react"
-import {
-  Breadcrumb,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/shared/ui/breadcrumb"
+import { Breadcrumb, BreadcrumbList, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/shared/ui/breadcrumb"
+
 
 type SidebarBreadcrumbItem = {
   label: string

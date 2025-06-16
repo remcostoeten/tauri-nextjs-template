@@ -1,7 +1,7 @@
-import type { t_navigation_preference } from "@/api/db/schema"
+"use server"
 
-// This is a mock implementation - replace with real database query later
-export async function getNavigationPreferencesQuery(projectId: string): Promise<t_navigation_preference[]> {
-  // For now, return empty array to use default navigation
-  return []
-} 
+import { getNavigationPreferences } from "@/module/dashboard/api/queries/navigation-preferences-repository"
+
+export async function getNavigationPreferencesQuery(projectId: string) {
+  return await getNavigationPreferences(projectId)
+}

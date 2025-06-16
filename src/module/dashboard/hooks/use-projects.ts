@@ -1,60 +1,61 @@
-import { useState } from "react"
+"use client"
 
-type Project = {
-  id: string
-  name: string
-  avatar?: string
-  color: string
-}
+import { useEffect } from "react"
+import { getProjectsQuery } from "@/module/project/api/queries/get-projects"
+import { createProjectMutation } from "@/module/project/api/mutations/create-project"
+import { updateProjectMutation } from "@/module/project/api/mutations/update-project"
+import { deleteProjectMutation } from "@/module/project/api/mutations/delete-project"
+import { useCrudFactory } from "@/shared/hooks/use-crud-factory"
+import { TProject, TNewProject } from "@/module/project/api/schema/project-schema"
 
 export function useProjects() {
-  const [currentProject] = useState<Project>({
-    id: "1",
-    name: "Personal Workspace",
-    color: "#f76808",
-  })
-
-  const [projects] = useState<Project[]>([
-    {
-      id: "1",
-      name: "Personal Workspace",
-      color: "#f76808",
+  const crudOperations = {
+    getAll: async (): Promise<TProject[]> => {
+      return await getProjectsQuery()
     },
-    {
-      id: "2",
-      name: "Team Workspace",
-      color: "#00b8d4",
+    create: async (projectData: TNewProject): Promise<TProject> => {
+      const formData = new FormData()
+      formData.append("name", projectData.name)
+      if (projectData.description) formData.append("description", projectData.description)
+      if (projectData.color) formData.append("color", projectData.color)
+      if (projectData.icon) formData.append("icon", projectData.icon)
+
+      const result = await createProjectMutation(formData)
+      if (!result.success || !result.project) {
+        throw new Error(result.error || "Failed to create project")
+      }
+      return result.project
     },
-  ])
-
-  const setCurrentProject = (project: Project) => {
-    console.log("Setting current project:", project)
-    // Implement this when you have real data
+    update: async (id: string, updates: Partial<TNewProject>): Promise<TProject> => {
+      const result = await updateProjectMutation(id, updates)
+      if (!result.success || !result.project) {
+        throw new Error(result.error || "Failed to update project")
+      }
+      return result.project
+    },
+    delete: async (id: string): Promise<void> => {
+      const result = await deleteProjectMutation(id)
+      if (!result.success) {
+        throw new Error(result.error || "Failed to delete project")
+      }
+    }
   }
 
-  const createProject = async (name: string) => {
-    console.log("Creating project:", name)
-    // Implement this when you have real data
-  }
+  const crud = useCrudFactory<TProject, TNewProject>(crudOperations)
 
-  const updateProject = async (id: string, data: Partial<Project>) => {
-    console.log("Updating project:", id, data)
-    // Implement this when you have real data
-  }
-
-  const deleteProject = async (id: string) => {
-    console.log("Deleting project:", id)
-    // Implement this when you have real data
-  }
+  useEffect(() => {
+    crud.loadItems()
+  }, [])
 
   return {
-    projects,
-    currentProject,
-    setCurrentProject,
-    createProject,
-    updateProject,
-    deleteProject,
-    isLoading: false,
-    error: null,
+    projects: crud.items,
+    currentProject: crud.currentItem,
+    setCurrentProject: crud.setCurrentItem,
+    createProject: crud.createItem,
+    updateProject: crud.updateItem,
+    deleteProject: crud.deleteItem,
+    isLoading: crud.isLoading,
+    error: crud.error,
+    refetch: crud.loadItems,
   }
-} 
+}

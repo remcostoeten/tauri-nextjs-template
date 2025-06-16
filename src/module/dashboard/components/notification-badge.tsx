@@ -1,15 +1,15 @@
 'use client';
 
-import type { t_notification } from '../types/sidebar-types';
+import type { TNotification } from '../types/sidebar-types';
 
 type Props = {
-  notifications?: t_notification[];
+  notifications?: TNotification[];
 };
 
 export function NotificationBadge({ notifications }: Props) {
   if (!notifications || notifications.length === 0) return null;
 
-  const totalCount = notifications.reduce((sum, n) => sum + n.count, 0);
+  const totalCount = notifications.reduce((sum: number, n) => sum + n.count, 0);
   const hasWarning = notifications.some((n) => n.type === 'warning');
   const hasError = notifications.some((n) => n.type === 'error');
 

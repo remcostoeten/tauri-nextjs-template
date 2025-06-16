@@ -1,0 +1,168 @@
+/* Sidebar Theme Overrides - Compact Design */
+[data-sidebar="sidebar"] {
+  background-color: #111111 !important;
+  border-color: #2a2a2a !important;
+  height: calc(100vh - 3.5rem) !important; /* Subtract footer height */
+}
+
+[data-sidebar="header"] {
+  background-color: #111111 !important;
+  border-color: #2a2a2a !important;
+  padding: 0.5rem !important;
+}
+
+[data-sidebar="content"] {
+  background-color: #111111 !important;
+  padding: 0.5rem !important;
+}
+
+[data-sidebar="footer"] {
+  background-color: #111111 !important;
+  border-color: #2a2a2a !important;
+  padding: 0.5rem !important;
+}
+
+[data-sidebar="menu-button"] {
+  color: #ffffff !important;
+  min-height: 2rem !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+  font-size: 0.875rem !important;
+}
+
+[data-sidebar="menu-button"]:hover {
+  background-color: #2a2a2a !important;
+}
+
+[data-sidebar="menu-button"][data-active="true"] {
+  background-color: #3f220d !important;
+  color: #f76808 !important;
+}
+
+[data-sidebar="group-label"] {
+  color: #b4b4b4 !important;
+  font-size: 0.75rem !important;
+  padding: 0.5rem 0.75rem !important;
+  font-weight: 500 !important;
+}
+
+[data-sidebar="separator"] {
+  background-color: #2a2a2a !important;
+  margin: 0.25rem 0 !important;
+}
+
+/* Better spacing for compact menu items */
+[data-sidebar="menu"] {
+  gap: 0.125rem !important;
+}
+
+/* Nested item indentation */
+.nested-item {
+  padding-left: 1.5rem !important;
+}
+
+/* Hover effects for action buttons */
+.group:hover .opacity-0 {
+  opacity: 1 !important;
+}
+
+/* Collapsed state styles */
+[data-sidebar="sidebar"][data-state="collapsed"] [data-sidebar="menu-button"] span:last-child {
+  display: none;
+}
+
+[data-sidebar="sidebar"][data-state="collapsed"] [data-sidebar="group-label"] {
+  opacity: 0;
+  margin-top: -2rem;
+}
+
+/* Custom Scrollbars - Very Subtle */
+[data-sidebar="content"] {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2a transparent;
+}
+
+[data-sidebar="content"]::-webkit-scrollbar {
+  width: 4px;
+}
+
+[data-sidebar="content"]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-sidebar="content"]::-webkit-scrollbar-thumb {
+  background-color: #2a2a2a;
+  border-radius: 2px;
+  border: none;
+}
+
+[data-sidebar="content"]::-webkit-scrollbar-thumb:hover {
+  background-color: #3a3a3a;
+}
+
+/* Apply subtle scrollbars to dropdown menus too */
+.dropdown-menu-content {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2a transparent;
+}
+
+.dropdown-menu-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.dropdown-menu-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dropdown-menu-content::-webkit-scrollbar-thumb {
+  background-color: #2a2a2a;
+  border-radius: 2px;
+  border: none;
+}
+
+.dropdown-menu-content::-webkit-scrollbar-thumb:hover {
+  background-color: #3a3a3a;
+}
+
+/* Global subtle scrollbars for any scrollable content */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2a transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #2a2a2a;
+  border-radius: 2px;
+  border: none;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #3a3a3a;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Shimmer animation for skeleton loading */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
