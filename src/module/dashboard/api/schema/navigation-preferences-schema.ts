@@ -1,5 +1,6 @@
+import { pgTable, uuid, varchar, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { projects } from "@/module/project/api/schemas/projects";
 
-import { pgTable, uuid, varchar, text, timestamp, boolean, integer } from "drizzle-orm/pg-core"
 export const navigationPreferences = pgTable("navigation_preferences", {
   id: uuid("id").defaultRandom().primaryKey(),
   projectId: uuid("project_id")
@@ -11,8 +12,8 @@ export const navigationPreferences = pgTable("navigation_preferences", {
   customLabel: varchar("custom_label", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-})
+});
 
-export type t_navigation_preference = typeof navigationPreferences.$inferSelect
-export type t_new_navigation_preference = typeof navigationPreferences.$inferInsert
+export type t_navigation_preference = typeof navigationPreferences.$inferSelect;
+export type t_new_navigation_preference = typeof navigationPreferences.$inferInsert;
 
