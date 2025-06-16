@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/ui/dialog"
 import { Button } from "@/shared/ui/button"
 import { AlertTriangle } from "lucide-react"
-import type { t_project } from "@/api/db/schema"
+import { t_project } from "@/module/projects/api/schema/project-schema"
 
 type DeleteProjectDialogProps = {
   open: boolean

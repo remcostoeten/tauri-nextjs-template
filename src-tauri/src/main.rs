@@ -1,4 +1,3 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod version;
@@ -6,6 +5,13 @@ mod auth;
 
 use version::{get_current_version, increment_version};
 use auth::{hash_password, verify_password, generate_session_token, check_login_rate_limit, save_avatar, RateLimiter};
+
+#[tauri::command]
+fn get_project_name() -> String {
+    tauri::Config::default()
+        .product_name
+        .unwrap_or_else(|| "Skibidado".to_string())
+}
 
 fn main() {
     let rate_limiter = RateLimiter::new();
@@ -24,6 +30,7 @@ fn main() {
             generate_session_token,
             check_login_rate_limit,
             save_avatar,
+            get_project_name,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

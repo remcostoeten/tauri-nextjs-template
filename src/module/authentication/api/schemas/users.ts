@@ -8,10 +8,6 @@ export const users = sqliteTable('users', {
 	avatar: text('avatar'),
 	emailVerified: integer('email_verified_at', { mode: 'timestamp' }),
 	lastLoginAt: integer('last_login_at', { mode: 'timestamp' }),
-	createdAt: integer('created_at', { mode: 'timestamp' })
-		.notNull()
-		.$defaultFn(() => new Date()),
-	updatedAt: integer('updated_at', { mode: 'timestamp' })
-		.notNull()
-		.$defaultFn(() => new Date()),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });

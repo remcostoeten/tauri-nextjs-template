@@ -14,12 +14,11 @@ import { Button } from '@/shared/ui/button';
 import { CreateProjectDialog } from './create-project-dialog';
 import { DeleteProjectDialog } from './delete-project-dialog';
 import { EditProjectDialog } from './edit-project-dialog';
-import { useToast } from '@/shared/hooks/use-toast';
+import { toast } from '@/shared/ui';
 
 export function ProjectList() {
     const [projects, setProjects] = useState<TProject[]>([]);
     const [loading, setLoading] = useState(true);
-    const { toast } = useToast();
 
     async function fetchProjects() {
         try {
@@ -30,11 +29,7 @@ export function ProjectList() {
             const data = await response.json();
             setProjects(data);
         } catch (error) {
-            toast({
-                title: 'Error',
-                description: 'Failed to fetch projects',
-                variant: 'destructive',
-            });
+            toast.warning('Failed to fetch projects');
         } finally {
             setLoading(false);
         }

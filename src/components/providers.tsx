@@ -1,4 +1,5 @@
-import { ToastProvider, TooltipProvider } from '@/shared/ui/'
+import {  TooltipProvider } from '@/shared/ui/'
+import { ToastProvider } from '@/shared/ui/toast'
 
 export function Providers({ children }: children) {
 	return (

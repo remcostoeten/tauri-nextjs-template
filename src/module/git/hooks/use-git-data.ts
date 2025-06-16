@@ -21,6 +21,7 @@ type TGitHubCommit = {
 
 type TAppFooterData = {
     version: string
+    projectName: string
     latest_commit?: TGitHubCommit
     recent_commits: TGitHubCommit[]
     is_loading: boolean
@@ -40,6 +41,7 @@ export function useAppFooterData(): TAppFooterData {
     const { isTauri } = usePlatform()
     const [data, setData] = useState<TAppFooterData>({
         version: '0.00',
+        projectName: 'Skibidado',
         latest_commit: undefined,
         recent_commits: [],
         is_loading: true,
@@ -78,19 +80,21 @@ export function useAppFooterData(): TAppFooterData {
         }
     }
 
-    const fetchVersion = async (): Promise<string> => {
+    const fetchVersion = async (): Promise<{ version: string; projectName: string }> => {
         if (isTauri) {
             try {
                 const version = await invoke('get_current_version') as string
-                return version
+                const projectName = await invoke('get_project_name') as string
+                return { version, projectName }
             } catch (error) {
                 console.error('Failed to fetch version from Tauri:', error)
             }
         }
 
-        return process.env.NEXT_PUBLIC_APP_VERSION ||
-            process.env.npm_package_version ||
-            '1.0.0'
+        return {
+            version: process.env.NEXT_PUBLIC_APP_VERSION || process.env.npm_package_version || '1.0.0',
+            projectName: 'Skibidado'
+        }
     }
 
     const fetchCommits = async (): Promise<TGitHubCommit[]> => {
@@ -117,12 +121,13 @@ export function useAppFooterData(): TAppFooterData {
         try {
             setData(prev => ({ ...prev, is_loading: true, is_error: false }))
 
-            const version = await fetchVersion()
-
             const cached = getCachedCommits()
+            const { version, projectName } = await fetchVersion()
+
             if (cached && isCacheValid(cached.timestamp)) {
                 setData({
                     version,
+                    projectName,
                     latest_commit: cached.commits[0] ?? undefined,
                     recent_commits: cached.commits,
                     is_loading: false,
@@ -140,6 +145,7 @@ export function useAppFooterData(): TAppFooterData {
 
             setData({
                 version,
+                projectName,
                 latest_commit,
                 recent_commits: commits,
                 is_loading: false,
@@ -151,11 +157,12 @@ export function useAppFooterData(): TAppFooterData {
             console.error('Failed to fetch app footer data:', error)
 
             const cached = getCachedCommits()
-            const version = await fetchVersion().catch(() => '0.00')
+            const { version, projectName } = await fetchVersion().catch(() => ({ version: '0.00', projectName: 'Skibidado' }))
 
             if (cached) {
                 setData({
                     version,
+                    projectName,
                     latest_commit: cached.commits[0] ?? undefined,
                     recent_commits: cached.commits,
                     is_loading: false,
@@ -166,6 +173,7 @@ export function useAppFooterData(): TAppFooterData {
             } else {
                 setData({
                     version,
+                    projectName,
                     latest_commit: undefined,
                     recent_commits: [],
                     is_loading: false,

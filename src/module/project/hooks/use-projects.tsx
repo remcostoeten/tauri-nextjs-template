@@ -6,8 +6,8 @@ import { getProjectsQuery } from "../api/queries/get-projects"
 import { createProjectMutation } from "../api/mutations/create-project"
 import { updateProjectMutation } from "../api/mutations/update-project"
 import { deleteProjectMutation } from "../api/mutations/delete-project"
-import type { t_project, t_new_project } from "@/api/db/schema"
-
+import { t_project } from "@/module/projects/api/schema/project-schema"
+ 
 export function useProjects() {
   const crudOperations = {
     getAll: async (): Promise<t_project[]> => {

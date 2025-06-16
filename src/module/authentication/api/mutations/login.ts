@@ -1,8 +1,8 @@
 'use server';
 
 import { createSession } from '@/module/authentication/helpers/session';
-import { userRepository } from '../user-repository';
 import { TAuthMutationResponse } from '@/typings/auth';
+import { userRepository } from '../user-repository';
 
 export async function login(formData: FormData): Promise<TAuthMutationResponse> {
     const email = formData.get('email')?.toString();

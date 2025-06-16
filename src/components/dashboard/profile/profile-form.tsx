@@ -19,6 +19,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/ui/avatar';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { toast } from '@/shared/ui';
 
 const profileFormSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -31,7 +32,6 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 export function ProfileForm() {
     const { user, loading } = useUser();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { toast } = useToast();
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileFormSchema),
@@ -90,16 +90,9 @@ export function ProfileForm() {
                 throw new Error('Failed to update profile');
             }
 
-            toast({
-                title: 'Profile updated',
-                description: 'Your profile has been updated successfully.',
-            });
+            toast.success('Profile updated successfully');
         } catch (error) {
-            toast({
-                title: 'Error',
-                description: 'Failed to update profile. Please try again.',
-                variant: 'destructive',
-            });
+            toast.error('Failed to update profile. Please try again.');
         } finally {
             setIsSubmitting(false);
         }

@@ -12,12 +12,12 @@ import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { cn } from '@/shared/helpers';
 import Link from 'next/link';
-import { toast } from '@/components/toast';
 import { login } from '../api/mutations/login';
 import { DiscordLoginButton } from './discord-login';
 import { GitHubLoginButton } from './github-login';
 import { GoogleLoginButton } from './google-login';
-
+import { toast } from 'sonner';
+    
 function LoginButton() {
     const { pending } = useFormStatus();
 

@@ -1,20 +1,20 @@
-import { pgTable, uuid, varchar, text, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
 
-export const projects = pgTable('projects', {
-    id: uuid('id').defaultRandom().primaryKey(),
-    name: varchar('name', { length: 255 }).notNull(),
+export const projects = sqliteTable('projects', {
+    id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    name: text('name').notNull(),
     description: text('description'),
-    status: varchar('status', { length: 20 }).notNull().default('active'),
-    ownerId: uuid('owner_id').notNull(),
-    createdAt: timestamp('created_at').defaultNow(),
-    updatedAt: timestamp('updated_at').defaultNow(),
+    status: text('status').notNull().default('active'),
+    ownerId: text('owner_id').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
-export const projectMembers = pgTable('project_members', {
-    id: uuid('id').defaultRandom().primaryKey(),
-    projectId: uuid('project_id').notNull(),
-    userId: uuid('user_id').notNull(),
-    role: varchar('role', { length: 20 }).notNull().default('member'),
-    createdAt: timestamp('created_at').defaultNow(),
-    updatedAt: timestamp('updated_at').defaultNow(),
+export const projectMembers = sqliteTable('project_members', {
+    id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    projectId: text('project_id').references(() => projects.id).notNull(),
+    userId: text('user_id').notNull(),
+    role: text('role').notNull().default('member'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 }); 

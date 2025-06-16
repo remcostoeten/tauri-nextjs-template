@@ -95,6 +95,7 @@ function CommitTree({ commits, is_stale }: { commits?: TCommit[], is_stale?: boo
 
 type TProps = {
     version?: string
+    projectName?: string
     latest_commit?: TCommit
     recent_commits?: TCommit[]
     is_loading?: boolean
@@ -105,6 +106,7 @@ type TProps = {
 
 export function AppFooter({
     version = '1.0.0',
+    projectName = 'Skibidado',
     latest_commit,
     recent_commits = [],
     is_loading = false,
@@ -124,14 +126,15 @@ export function AppFooter({
         <div className="fixed bottom-0 left-0 right-0 z-50">
             {/* Hover popup */}
             <div
-                className={`absolute bottom-full left-4 right-4 md:left-8 md:right-auto md:max-w-md transform transition-all duration-300 ease-out ${isHovered && recent_commits.length > 0
-                    ? 'translate-y-0 opacity-100 pointer-events-auto'
-                    : 'translate-y-2 opacity-0 pointer-events-none'
-                    }`}
+                className={`absolute bottom-full left-4 right-4 md:left-8 md:right-auto md:max-w-md transform transition-all duration-300 ease-out ${
+                    isHovered && recent_commits.length > 0
+                        ? 'translate-y-0 opacity-100 pointer-events-auto'
+                        : 'translate-y-2 opacity-0 pointer-events-none'
+                }`}
             >
                 <Card className="mb-2 shadow-xl border-2">
                     <div className="absolute bottom-0 left-8 transform translate-y-full">
-                        <div className="w-3 h-3 bg-background border-r border-b border-foreground AAA transform rotate-45"></div>
+                        <div className="w-3 h-3 bg-background border-r border-b border-border transform rotate-45"></div>
                     </div>
                     <CardContent className="p-0">
                         <CommitTree commits={recent_commits} is_stale={is_stale} />
@@ -145,13 +148,13 @@ export function AppFooter({
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
-                <div className="px-4 py-3 md:px-6">
+                <div className="container mx-auto px-4 py-3">
                     <div className="flex items-center justify-between gap-4">
                         {/* Left side - App info */}
                         <div className="flex items-center gap-3 md:gap-4">
                             <div className="flex items-center gap-2">
                                 <GitCommit className="w-4 h-4 text-primary" />
-                                <span className="font-semibold text-foreground hidden sm:inline">Agent Plan</span>
+                                <span className="font-semibold text-foreground hidden sm:inline">{projectName}</span>
                             </div>
 
                             <div className="flex items-center gap-2 md:gap-3">
@@ -159,16 +162,16 @@ export function AppFooter({
                                     v{version}
                                 </Badge>
 
-                                <Badge variant={is_desktop ? "default" : "secondary"} className="text-xs">
+                                <Badge variant={is_desktop ? "default" : "secondary"} className="text-xs flex items-center">
                                     {is_desktop ? (
                                         <>
                                             <Monitor className="w-3 h-3 mr-1" />
-                                            Desktop
+                                            <span>Desktop</span>
                                         </>
                                     ) : (
                                         <>
                                             <Globe className="w-3 h-3 mr-1" />
-                                            Web
+                                            <span>Web</span>
                                         </>
                                     )}
                                 </Badge>

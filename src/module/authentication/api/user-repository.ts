@@ -107,21 +107,70 @@ export function userRepository() {
     };
 }
 
+export class UserRegistrationError extends Error {
+    constructor(message: string, public code: string) {
+        super(message);
+        this.name = 'UserRegistrationError';
+    }
+}
+
 export async function createUser(input: {
     name: string;
     email: string;
     password: string;
 }) {
-    const hashedPassword = await hashPassword(input.password);
+    try {
+        // Check if user exists
+        const existingUser = await userRepository().findByEmail(input.email);
+        if (existingUser) {
+            // Check if it's an OAuth account
+            const oauthAccounts = await userRepository().findUserOAuthAccounts(existingUser.id);
+            if (oauthAccounts.length > 0) {
+                throw new UserRegistrationError(
+                    `This email is already registered with ${oauthAccounts[0].provider}. Please sign in using ${oauthAccounts[0].provider} instead.`,
+                    'OAUTH_ACCOUNT_EXISTS'
+                );
+            }
+            throw new UserRegistrationError(
+                'An account with this email already exists. Please sign in or reset your password.',
+                'EMAIL_EXISTS'
+            );
+        }
 
-    const [user] = await db
-        .insert(users)
-        .values({
-            name: input.name,
-            email: input.email,
-            password: hashedPassword,
-        })
-        .returning();
+        const hashedPassword = await hashPassword(input.password);
 
-    return user;
+        const [user] = await db
+            .insert(users)
+            .values({
+                name: input.name,
+                email: input.email,
+                password: hashedPassword,
+            })
+            .returning();
+
+        if (!user) {
+            throw new UserRegistrationError(
+                'Failed to create account. Please try again.',
+                'CREATION_FAILED'
+            );
+        }
+
+        return user;
+    } catch (error) {
+        if (error instanceof UserRegistrationError) {
+            throw error;
+        }
+        // Handle database-specific errors
+        if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
+            throw new UserRegistrationError(
+                'An account with this email already exists. Please sign in or reset your password.',
+                'EMAIL_EXISTS'
+            );
+        }
+        console.error('User creation error:', error);
+        throw new UserRegistrationError(
+            'An unexpected error occurred. Please try again.',
+            'UNKNOWN_ERROR'
+        );
+    }
 }

@@ -9,7 +9,7 @@ import { Input } from "@/shared/ui/input"
 import { Textarea } from "@/shared/ui/textarea"
 import { Label } from "@/shared/ui/label"
 import { Folder, Rocket, Brain, Target, Zap, Star } from "lucide-react"
-import type { t_project, t_new_project } from "@/api/db/schema"
+import { t_project, t_new_project } from "@/module/projects/api/schema/project-schema"
 
 const projectColors = ["#f76808", "#e93d82", "#5842c8", "#35b979", "#ffcb47", "#ff6b6b", "#4ecdc4", "#45b7d1"]
 
