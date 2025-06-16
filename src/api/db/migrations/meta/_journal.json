@@ -15,6 +15,20 @@
       "when": 1749947628594,
       "tag": "0001_abandoned_mad_thinker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1750074314068,
+      "tag": "0002_striped_firelord",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1750074904218,
+      "tag": "0003_greedy_supernaut",
+      "breakpoints": true
     }
   ]
 }
