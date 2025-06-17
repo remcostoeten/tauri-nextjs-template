@@ -12,11 +12,29 @@ function getMockSidebarData(): TSidebarData {
 
   const navigationItems: TNavigationItem[] = [
     {
-      id: "1",
+      id: "home",
       title: "Home",
-      href: "/",
+      href: "/dashboard",
       icon: "Home",
       isActive: true,
+      isFavorite: false,
+      notifications: [],
+    },
+    {
+      id: "tasks",
+      title: "Tasks",
+      href: "/dashboard/tasks",
+      icon: "CheckSquare",
+      isActive: false,
+      isFavorite: false,
+      notifications: [],
+    },
+    {
+      id: "projects",
+      title: "Projects",
+      href: "/dashboard/projects",
+      icon: "FolderOpen",
+      isActive: false,
       isFavorite: false,
       notifications: [],
     },
@@ -34,11 +52,27 @@ function getMockSidebarData(): TSidebarData {
           id: "roadmap",
           name: "Roadmap",
           icon: "Target",
-          color: "#f76808",
+          color: "#5842c8",
+          isFavorite: false,
+          children: [],
+        },
+        {
+          id: "backlog",
+          name: "Backlog",
+          icon: "Database",
+          color: "#2ea44f",
           isFavorite: false,
           children: [],
         },
       ],
+    },
+    {
+      id: "development",
+      name: "Development",
+      icon: "Code",
+      color: "#5842c8",
+      isFavorite: false,
+      children: [],
     },
   ]
 
@@ -46,12 +80,14 @@ function getMockSidebarData(): TSidebarData {
     currentWorkspace: workspaces[0],
     workspaces,
     navigationItems,
-    favorites: [],
+    favorites: navigationItems.filter(item => item.isFavorite),
     spaces,
   }
 }
 
 export async function getSidebarData(): Promise<TSidebarData> {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 100))
   return getMockSidebarData()
 }
 

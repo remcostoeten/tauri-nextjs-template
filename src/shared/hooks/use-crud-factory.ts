@@ -1,15 +1,11 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import { TBaseEntity } from "../types/base"
 
-export type TCrudItem = {
-  id: string
-  createdAt?: string | Date | null
-  updatedAt?: string | Date | null
-  [key: string]: any
-}
+export type TCrudItem = TBaseEntity;
 
-export type TCrudOperations<T extends TCrudItem, U = Omit<T, "id" | "createdAt" | "updatedAt">> = {
+export type TCrudOperations<T extends TCrudItem, U = Omit<T, keyof TBaseEntity>> = {
   create: (item: U) => Promise<T>
   update: (id: string, updates: Partial<U>) => Promise<T>
   delete: (id: string) => Promise<void>
@@ -17,7 +13,7 @@ export type TCrudOperations<T extends TCrudItem, U = Omit<T, "id" | "createdAt" 
   getById?: (id: string) => Promise<T | undefined>
 }
 
-export function useCrudFactory<T extends TCrudItem, U = Omit<T, "id" | "createdAt" | "updatedAt">>(operations: TCrudOperations<T, U>) {
+export function useCrudFactory<T extends TCrudItem, U = Omit<T, keyof TBaseEntity>>(operations: TCrudOperations<T, U>) {
   const [items, setItems] = useState<T[]>([])
   const [currentItem, setCurrentItem] = useState<T | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -38,7 +34,7 @@ export function useCrudFactory<T extends TCrudItem, U = Omit<T, "id" | "createdA
     } finally {
       setIsLoading(false)
     }
-  }, [operations, currentItem])
+  }, [operations])
 
   const createItem = useCallback(
     async (itemData: U) => {
@@ -63,9 +59,7 @@ export function useCrudFactory<T extends TCrudItem, U = Omit<T, "id" | "createdA
       try {
         const result = await operations.update(id, updates)
         setItems((prev) => prev.map((item) => (item.id === id ? result : item)))
-        if (currentItem?.id === id) {
-          setCurrentItem(result)
-        }
+        setCurrentItem((current) => current?.id === id ? result : current)
         return result
       } catch (error) {
         await loadItems()
@@ -74,7 +68,7 @@ export function useCrudFactory<T extends TCrudItem, U = Omit<T, "id" | "createdA
         setIsLoading(false)
       }
     },
-    [operations, currentItem, loadItems],
+    [operations, loadItems],
   )
 
   const deleteItem = useCallback(
@@ -82,11 +76,15 @@ export function useCrudFactory<T extends TCrudItem, U = Omit<T, "id" | "createdA
       setIsLoading(true)
       try {
         await operations.delete(id)
-        setItems((prev) => prev.filter((item) => item.id !== id))
-        if (currentItem?.id === id) {
-          const remainingItems = items.filter((item) => item.id !== id)
-          setCurrentItem(remainingItems.length > 0 ? remainingItems[0] : null)
-        }
+        setItems((prev) => {
+          const newItems = prev.filter((item) => item.id !== id)
+          setCurrentItem((current) =>
+            current?.id === id
+              ? newItems.length > 0 ? newItems[0] : null
+              : current
+          )
+          return newItems
+        })
       } catch (error) {
         await loadItems()
         throw error
@@ -94,7 +92,7 @@ export function useCrudFactory<T extends TCrudItem, U = Omit<T, "id" | "createdA
         setIsLoading(false)
       }
     },
-    [operations, items, currentItem, loadItems],
+    [operations, loadItems],
   )
 
   return {

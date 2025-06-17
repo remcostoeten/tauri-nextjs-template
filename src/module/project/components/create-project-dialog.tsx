@@ -136,7 +136,7 @@ export function CreateProjectDialog({ open, onOpenChange, onCreateProject }: Cre
                   disabled={isLoading}
                   className={`p-3 rounded-lg transition-all duration-200 ${
                     selectedIcon === name
-                      ? "bg-[#f76808] text-white shadow-lg"
+                      ? "bg-red-400  AAAA text-white shadow-lg"
                       : "bg-[#2a2a2a] text-[#b4b4b4] hover:bg-[#3a3a3a] hover:text-white"
                   } disabled:opacity-50`}
                 >
@@ -176,7 +176,7 @@ export function CreateProjectDialog({ open, onOpenChange, onCreateProject }: Cre
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading} className="flex-1 bg-[#f76808] hover:bg-[#e55a00] text-white">
+            <Button type="submit" disabled={isLoading} className="flex-1 bg-red-400  AAAA hover:bg-[#e55a00] text-white">
               {isLoading ? "Creating..." : "Create Project"}
             </Button>
           </div>

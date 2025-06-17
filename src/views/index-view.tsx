@@ -1,5 +1,6 @@
 "use client";
 
+import { AppFooter } from "@/module/git/components/app-footer";
 import { Button } from "@/shared/ui";
 import { BrowserEnvironmentNotification } from "@/shared/ui/browser-environment-notification";
 import { invoke } from "@tauri-apps/api/core";
@@ -30,7 +31,9 @@ export default function IndexView() {
                     {greeted ?? "Click the button to call the Rust function"}
                 </p>
             </div>
-
+            <footer className="h-14 border-t border-[#2a2a2a] bg-[#111111]">
+            <AppFooter autoHide={false} />
+          </footer>
             <BrowserEnvironmentNotification
                 position="bottom-left"
                 storageKey="landingPageDesktopPromotion"

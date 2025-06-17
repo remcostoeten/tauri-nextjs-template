@@ -1,13 +1,7 @@
-import {
-  sqliteTable,
-  text,
-  integer,
-  primaryKey
-} from "drizzle-orm/sqlite-core"
-import { sql } from "drizzle-orm"
+import { text, integer } from "drizzle-orm/sqlite-core";
+import { createTable, TBaseTable, TBaseInsert } from "@/api/db/schema/base-entity";
 
-export const projects = sqliteTable("projects", {
-  id: text("id").primaryKey().default(sql`lower(hex(randomblob(16)))`), // UUID alternative
+export const projects = createTable("projects", {
   name: text("name").notNull(),
   description: text("description"),
   color: text("color").default("#f76808"),
@@ -15,10 +9,8 @@ export const projects = sqliteTable("projects", {
   isActive: integer("is_active", { mode: "boolean" }).default(true),
   status: text("status").default("active"),
   ownerId: text("owner_id"),
-  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`)
-})
+});
 
 // Types
-export type TProject = typeof projects.$inferSelect
-export type TNewProject = typeof projects.$inferInsert
+export type TProject = TBaseTable<typeof projects>;
+export type TNewProject = TBaseInsert<typeof projects>;

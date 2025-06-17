@@ -6,16 +6,18 @@ import { getSidebarData } from "../repositories/sidebar-repository"
 
 export function useSidebarData() {
   const [data, setData] = useState<TSidebarData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadData() {
       try {
         setIsLoading(true)
+        setError(null)
         const sidebarData = await getSidebarData()
         setData(sidebarData)
       } catch (err) {
+        console.error("Failed to load sidebar data:", err)
         setError(err instanceof Error ? err.message : "Failed to load sidebar data")
       } finally {
         setIsLoading(false)

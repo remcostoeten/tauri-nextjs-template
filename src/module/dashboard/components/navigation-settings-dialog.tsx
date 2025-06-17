@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { useState, useEffect } from "react"
 import {
   DndContext,
@@ -17,40 +18,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/ui/di
 import { Button } from "@/shared/ui/button"
 import { Input } from "@/shared/ui/input"
 import { Label } from "@/shared/ui/label"
-import { Switch } from "@/shared/ui/switch"
 import { GripVertical, Eye, EyeOff, Edit2, Check, X, Star } from "lucide-react"
-import type { TNavigationItem } from "../types/sidebar-types"
+import type { TNavigationItem, TNavigationPreferenceUI } from "../types/sidebar-types"
 import { cn } from "@/shared/lib/utils"
-
-type NavigationItem = {
-  id: string;
-  title: string;
-  icon: string;
-  href: string;
-  isVisible: boolean;
-  isFavorite: boolean;
-  position: number;
-  customLabel?: string;
-};
 
 type NavigationSettingsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   navigationItems: TNavigationItem[];
-  onSave: (preferences: {
-    itemId: string;
-    isVisible: boolean;
-    isFavorite: boolean;
-    position: number;
-    customLabel?: string;
-  }[]) => Promise<void>;
-  currentPreferences: {
-    itemId: string;
-    isVisible: boolean;
-    isFavorite: boolean;
-    position: number;
-    customLabel?: string;
-  }[];
+  onSave: (preferences: TNavigationPreferenceUI[]) => Promise<void>;
+  currentPreferences: TNavigationPreferenceUI[];
+};
+
+type SortableNavigationItemProps = {
+  item: TNavigationItem;
+  onToggleVisibility: (id: string) => void;
+  onToggleFavorite: (id: string) => void;
+  onUpdateLabel: (id: string, label: string) => void;
 };
 
 function SortableNavigationItem({
@@ -58,12 +42,7 @@ function SortableNavigationItem({
   onToggleVisibility,
   onToggleFavorite,
   onUpdateLabel,
-}: {
-  item: NavigationItem
-  onToggleVisibility: (id: string) => void
-  onToggleFavorite: (id: string) => void
-  onUpdateLabel: (id: string, label: string) => void
-}) {
+}: SortableNavigationItemProps) {
   const {
     attributes,
     listeners,
@@ -153,7 +132,7 @@ function SortableNavigationItem({
           onClick={() => onToggleFavorite(item.id)}
           className={cn(
             "h-8 w-8 p-0 hover:bg-[#3a3a3a]",
-            item.isFavorite && "text-[#f76808]"
+            item.isFavorite && "text-red-400  AAAA"
           )}
         >
           <Star className="size-4" />
@@ -182,7 +161,7 @@ export function NavigationSettingsDialog({
   onSave,
   currentPreferences,
 }: NavigationSettingsDialogProps) {
-  const [items, setItems] = useState<NavigationItem[]>([])
+  const [items, setItems] = useState<TNavigationItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -198,19 +177,19 @@ export function NavigationSettingsDialog({
     if (open) {
       const prefsMap = new Map(currentPreferences.map((pref) => [pref.itemId, pref]))
 
-      const initialItems: NavigationItem[] = navigationItems.map((item, index) => {
+      const initialItems = navigationItems.map((item, index) => {
         const pref = prefsMap.get(item.id)
         return {
           ...item,
-          isVisible: pref?.isVisible ?? true,
-          isFavorite: pref?.isFavorite ?? false,
+          isVisible: pref ? pref.isVisible === 1 : true,
+          isFavorite: pref ? pref.isFavorite === 1 : false,
           position: pref?.position ?? index,
           customLabel: pref?.customLabel,
         }
       })
 
       // Sort by position
-      initialItems.sort((a, b) => a.position - b.position)
+      initialItems.sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
       setItems(initialItems)
       setError(null)
     }
@@ -250,11 +229,11 @@ export function NavigationSettingsDialog({
     setError(null)
 
     try {
-      const preferences = items.map((item) => ({
+      const preferences: TNavigationPreferenceUI[] = items.map((item, index) => ({
         itemId: item.id,
-        isVisible: item.isVisible,
-        isFavorite: item.isFavorite,
-        position: item.position,
+        isVisible: item.isVisible ? 1 : 0,
+        isFavorite: item.isFavorite ? 1 : 0,
+        position: index,
         customLabel: item.customLabel,
       }))
 
@@ -269,7 +248,7 @@ export function NavigationSettingsDialog({
   }
 
   function handleReset() {
-    const resetItems: NavigationItem[] = navigationItems.map((item, index) => ({
+    const resetItems = navigationItems.map((item, index) => ({
       ...item,
       isVisible: true,
       isFavorite: false,
@@ -346,7 +325,7 @@ export function NavigationSettingsDialog({
           <Button
             onClick={handleSave}
             disabled={isLoading}
-            className="flex-1 bg-[#f76808] hover:bg-[#e55a00] text-white"
+            className="flex-1 bg-red-400  AAAA hover:bg-[#e55a00] text-white"
           >
             {isLoading ? "Saving..." : "Save Changes"}
           </Button>

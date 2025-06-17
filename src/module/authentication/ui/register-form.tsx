@@ -51,7 +51,6 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<'div'
 
     async function handleSubmit(formData: FormData) {
         try {
-            // Validate terms acceptance
             if (!termsAccepted) {
                 toast.error('Please accept the Terms of Service and Privacy Policy to continue');
                 return;
@@ -77,12 +76,12 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<'div'
     }
 
     return (
-        <div className={cn('flex min-h-screen items-center justify-center', className)} {...props}>
+        <div className={cn('flex min-h-screen items-center justify-center w-screen', className)} {...props}>
             <div className="w-full max-w-[720px] px-4">
                 <Card className="overflow-hidden py-0">
-                <div className="absolute top-0 left-0 w-full h-40 flex items-center justify-center pointer-events-none z-10">
-    <Logo />
-</div>     
+                    <div className="absolute top-0 left-0 w-full h-40 flex items-center justify-center pointer-events-none z-10">
+                        <Logo />
+                    </div>
                     <CardContent className="grid p-0 md:grid-cols-2 h-full">
                         <form
                             ref={formRef}
@@ -106,6 +105,11 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<'div'
                             <div className="grid gap-2">
                                 <Label htmlFor="email">Email</Label>
                                 <Input id="email" name="email" type="email" required />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="password">Password</Label>
+                                <Input id="password" name="password" type="password" required />
                             </div>
 
                             <div className="grid gap-2">

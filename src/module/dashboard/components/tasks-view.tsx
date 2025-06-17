@@ -19,7 +19,8 @@ import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { TTaskPriority, TTaskSection, TTaskLabel } from '@/typings/task';
-import { useTasks } from '@/hooks/use-tasks';
+import { useTasks } from '@/module/task/hooks/use-tasks';
+import { useTaskSections } from '@/module/task/hooks/use-task-sections';
 import { TaskPrioritySelect } from '@/components/task/task-priority-select';
 import { toast } from 'sonner';
 import {
@@ -31,6 +32,7 @@ import {
 } from '@/shared/ui/dropdown-menu';
 import { Badge } from '@/shared/ui/badge';
 import { ScrollArea } from '@/shared/ui/scroll-area';
+import { ExpandedTaskView } from '@/components/task/expanded-task-view'
 
 const priorityColors: Record<TTaskPriority, string> = {
   low: 'bg-blue-500/10 text-blue-500',
@@ -42,24 +44,30 @@ const priorityColors: Record<TTaskPriority, string> = {
 type TasksViewProps = {
   projectId?: string;
   defaultSection?: string;
+  initialData?: Awaited<ReturnType<typeof import('@/module/project/api/actions/task-actions').getTasks>>;
 };
 
-export function TasksView({ projectId, defaultSection }: TasksViewProps) {
+export function TasksView({ projectId, defaultSection, initialData }: TasksViewProps) {
   const {
     tasks,
-    sections,
-    labels,
-    isLoading,
-    error,
+    isLoading: tasksLoading,
+    error: tasksError,
     fetchTasks,
     createTask,
     toggleTaskCompletion,
     updateTask,
     deleteTask,
+  } = useTasks(projectId, initialData);
+
+  const {
+    sections,
+    labels,
+    isLoading: sectionsLoading,
+    error: sectionsError,
     createSection,
     updateSection,
     deleteSection,
-  } = useTasks(projectId);
+  } = useTaskSections(projectId, initialData);
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
@@ -75,15 +83,22 @@ export function TasksView({ projectId, defaultSection }: TasksViewProps) {
     if (!newTaskTitle.trim()) return;
 
     try {
+      if (!projectId) {
+        toast.error('No project selected. Please select a project first.');
+        return;
+      }
+
       await createTask({
         title: newTaskTitle,
-        projectId: projectId || '',
+        projectId,
         priority: 'medium',
         sectionId: sectionId || undefined,
       });
       setNewTaskTitle('');
+      await fetchTasks();
       toast.success('Task created');
     } catch (err) {
+      console.error('Failed to create task:', err);
       toast.error('Failed to create task. Please try again.');
     }
   };
@@ -95,6 +110,7 @@ export function TasksView({ projectId, defaultSection }: TasksViewProps) {
       await createSection({
         title: newSectionTitle,
         projectId: projectId || '',
+        order: sections.length,
       });
       setNewSectionTitle('');
       toast.success('Section created');
@@ -124,6 +140,7 @@ export function TasksView({ projectId, defaultSection }: TasksViewProps) {
 
   const renderTaskList = (sectionId?: string) => {
     const sectionTasks = tasks.filter((task) => task.sectionId === sectionId);
+    console.log('Rendering tasks for section:', sectionId, 'Tasks:', sectionTasks);
 
     return (
       <AnimatePresence>
@@ -138,7 +155,6 @@ export function TasksView({ projectId, defaultSection }: TasksViewProps) {
               expandedTask === task.id && 'bg-muted'
             )}
           >
-            {/* Task Status */}
             <button
               onClick={() => toggleTaskCompletion(task.id)}
               className="mt-1 flex-shrink-0"
@@ -228,33 +244,7 @@ export function TasksView({ projectId, defaultSection }: TasksViewProps) {
               {/* Expanded Task Details */}
               <AnimatePresence>
                 {expandedTask === task.id && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="mt-3 text-sm text-muted-foreground"
-                  >
-                    {task.description || 'No description'}
-
-                    {/* Quick Actions */}
-                    <div className="mt-3 flex items-center gap-2">
-                      <Button variant="outline" size="sm">
-                        <Clock className="w-3 h-3 mr-1" />
-                        Set due date
-                      </Button>
-                      <TaskPrioritySelect
-                        value={task.priority}
-                        onChange={async (newPriority) => {
-                          try {
-                            await updateTask(task.id, { priority: newPriority });
-                            toast.success(`Task priority updated to ${newPriority}`);
-                          } catch (err) {
-                            toast.error('Failed to update task priority');
-                          }
-                        }}
-                      />
-                    </div>
-                  </motion.div>
+                  <ExpandedTaskView task={task} onUpdate={updateTask} />
                 )}
               </AnimatePresence>
             </div>
@@ -264,10 +254,10 @@ export function TasksView({ projectId, defaultSection }: TasksViewProps) {
     );
   };
 
-  if (error) {
+  if (tasksError || sectionsError) {
     return (
       <div className="p-4 text-red-500">
-        {error.message || 'An error occurred while loading tasks'}
+        {(tasksError || sectionsError) || 'An error occurred while loading tasks'}
       </div>
     );
   }
@@ -290,7 +280,7 @@ export function TasksView({ projectId, defaultSection }: TasksViewProps) {
         </div>
 
         {/* Loading State */}
-        {isLoading ? (
+        {tasksLoading || sectionsLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>

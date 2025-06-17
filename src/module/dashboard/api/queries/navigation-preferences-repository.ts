@@ -3,7 +3,15 @@ import { navigationPreferences, type TNavigationPreference, type TNewNavigationP
 import { db } from "@/api/db/connection"
 import { sql } from "drizzle-orm"
 
-export async function getNavigationPreferences(projectId: string): Promise<TNavigationPreference[]> {
+type TProps = {
+  itemId: string
+  isVisible: number
+  isFavorite: number
+  position: number
+  customLabel?: string | null
+}
+
+export async function getNavigationPreferences(projectId: string): Promise<TProps[]> {
   return await db
     .select()
     .from(navigationPreferences)
@@ -40,46 +48,88 @@ export async function upsertNavigationPreference(
 
 export async function bulkUpdateNavigationPreferences(
   projectId: string,
-  preferences: Array<{ itemId: string; isVisible: boolean; isFavorite: boolean; position: number; customLabel?: string }>,
+  preferences: TProps[],
 ): Promise<void> {
-  // Use transaction for bulk update
-  await db.transaction(async (tx) => {
-    for (const pref of preferences) {
-      // First try to find existing preference
-      const existing = await tx
-        .select()
-        .from(navigationPreferences)
-        .where(
-          and(
-            eq(navigationPreferences.projectId, projectId),
-            eq(navigationPreferences.itemId, pref.itemId),
-          ),
-        )
-        .limit(1)
-
-      if (existing.length > 0) {
-        // Update existing preference
-        await tx
-          .update(navigationPreferences)
-          .set({
-            isVisible: pref.isVisible ? 1 : 0,
-            isFavorite: pref.isFavorite ? 1 : 0,
-            position: pref.position,
-            customLabel: pref.customLabel,
-            updatedAt: sql`CURRENT_TIMESTAMP`,
-          })
-          .where(eq(navigationPreferences.id, existing[0].id))
-      } else {
-        // Insert new preference
-        await tx.insert(navigationPreferences).values({
-          projectId,
-          itemId: pref.itemId,
-          isVisible: pref.isVisible ? 1 : 0,
-          isFavorite: pref.isFavorite ? 1 : 0,
-          position: pref.position,
-          customLabel: pref.customLabel,
-        })
-      }
+  try {
+    // Validate projectId
+    if (!projectId || typeof projectId !== 'string' || projectId.trim() === '') {
+      throw new Error('Invalid project ID provided')
     }
-  })
+
+    // Validate preferences array
+    if (!Array.isArray(preferences) || preferences.length === 0) {
+      throw new Error('No preferences provided for update')
+    }
+
+    // Validate each preference object
+    preferences.forEach((pref, index) => {
+      if (!pref.itemId || typeof pref.itemId !== 'string' || pref.itemId.trim() === '') {
+        throw new Error(`Invalid itemId in preference at index ${index}`)
+      }
+      if (typeof pref.isVisible !== 'number') {
+        throw new Error(`Invalid isVisible value in preference at index ${index}`)
+      }
+      if (typeof pref.isFavorite !== 'number') {
+        throw new Error(`Invalid isFavorite value in preference at index ${index}`)
+      }
+      if (typeof pref.position !== 'number') {
+        throw new Error(`Invalid position value in preference at index ${index}`)
+      }
+    })
+
+    await db.transaction(async (tx) => {
+      for (const pref of preferences) {
+        try {
+          const existing = await tx
+            .select()
+            .from(navigationPreferences)
+            .where(
+              and(
+                eq(navigationPreferences.projectId, projectId),
+                eq(navigationPreferences.itemId, pref.itemId),
+              ),
+            )
+            .limit(1)
+
+          if (existing.length > 0) {
+            await tx
+              .update(navigationPreferences)
+              .set({
+                isVisible: pref.isVisible,
+                isFavorite: pref.isFavorite,
+                position: pref.position,
+                customLabel: pref.customLabel ?? null,
+                updatedAt: sql`CURRENT_TIMESTAMP`,
+              })
+              .where(eq(navigationPreferences.id, existing[0].id))
+          } else {
+            await tx.insert(navigationPreferences).values({
+              projectId,
+              itemId: pref.itemId,
+              isVisible: pref.isVisible,
+              isFavorite: pref.isFavorite,
+              position: pref.position,
+              customLabel: pref.customLabel ?? null,
+            })
+          }
+        } catch (error) {
+          console.error("Failed to update/insert preference:", {
+            error,
+            projectId,
+            preference: pref,
+            errorMessage: error instanceof Error ? error.message : "Unknown error"
+          })
+          throw error
+        }
+      }
+    })
+  } catch (error) {
+    console.error("Transaction failed in bulkUpdateNavigationPreferences:", {
+      error,
+      projectId,
+      preferencesCount: preferences.length,
+      errorMessage: error instanceof Error ? error.message : "Unknown error"
+    })
+    throw error
+  }
 }

@@ -1,20 +1,20 @@
 export type TNotification = {
   id: string
+  type: string
   count: number
-  type: 'info' | 'warning' | 'error'
 }
 
 export type TNavigationItem = {
   id: string
   title: string
-  icon: string
-  href: string
+  href?: string
+  icon?: string
   isActive?: boolean
+  isFavorite?: boolean
   notifications?: TNotification[]
-  children?: TNavigationItem[]
-  isExpanded?: boolean
-  level?: number
-  isFavorite?: boolean 
+  customLabel?: string | null
+  position?: number
+  isVisible?: boolean
 }
 
 export type TWorkspace = {
@@ -45,10 +45,14 @@ export type TSidebarData = {
   isCollapsed?: boolean
 }
 
-export type TNavigationPreference = {
+// This type represents the UI version of navigation preferences
+export type TNavigationPreferenceUI = {
   itemId: string
-  isVisible: boolean
+  isVisible: number
   position: number
-  customLabel?: string
-  isFavorite?: boolean
+  customLabel?: string | null
+  isFavorite: number
 }
+
+// Re-export the database type for convenience
+export type { TNavigationPreference } from "@/module/dashboard/api/schema/navigation-preferences-schema"

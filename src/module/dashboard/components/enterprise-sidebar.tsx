@@ -12,28 +12,21 @@ import {
   Video,
   Target,
   Clock,
-  MoreHorizontal,
+  ChevronRight,
+  ChevronDown,
   Globe,
   Rocket,
   Brain,
   User,
   Star,
-  Search,
-  Plus,
-  HelpCircle,
-  UserPlus,
-  ChevronRight,
-  ChevronDown,
-  Calendar,
-  MessageCircle,
-  Compass,
-  FolderOpen,
-  Package,
-  MessageSquare,
-  Zap,
-  Book,
-  Database,
   Settings,
+  Compass,
+  Edit2,
+  Eye,
+  EyeOff,
+  Trash2,
+  MoreVertical,
+  Plus,
 } from "lucide-react"
 import {
   Sidebar,
@@ -51,15 +44,29 @@ import {
 import { Button } from "@/shared/ui/button"
 import { useSidebarData } from "../hooks/use-sidebar-data"
 import { useNavigationPreferences } from "../hooks/use-navigation-preferences"
-import type { TNavigationItem, TSpace } from "../types/sidebar-types"
+import type { TNavigationItem, TNavigationPreferenceUI } from "../types/sidebar-types"
 import { EnhancedSidebarSkeleton } from "./enhanced-sidebar-skeleton"
 import { useProjects } from "../hooks/use-projects"
 import { FancyWorkspaceSelector } from "./fancy-workspace-selector"
 import { NavigationSettingsDialog } from "./navigation-settings-dialog"
 import { NotificationBadge } from "./notification-badge"
-import { SpaceContextMenu } from "./space-context-menu"
-import { SidebarUserMenu } from './sidebar-user-menu'
+import { SidebarUserMenu } from "./sidebar-user-menu"
 import type { TProject } from "@/module/project/api/schema/project-schema"
+import { useMemo } from "react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from "@/shared/ui/dropdown-menu"
+import { Input } from "@/shared/ui/input"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/ui/dialog"
+import { Label } from "@/shared/ui/label"
+import { toast } from "sonner"
 
 const iconMap = {
   Home,
@@ -72,22 +79,11 @@ const iconMap = {
   Video,
   Target,
   Clock,
-  MoreHorizontal,
   Globe,
   Rocket,
   Brain,
   User,
   Star,
-  Calendar,
-  MessageCircle,
-  Compass,
-  FolderOpen,
-  Package,
-  MessageSquare,
-  Zap,
-  Book,
-  Database,
-  Search,
   Settings,
 }
 
@@ -113,11 +109,12 @@ export function EnterpriseSidebar({ onNavigate }: EnterpriseSidebarProps) {
     applyPreferencesToNavigation,
     isLoading: preferencesLoading,
   } = useNavigationPreferences(currentProject?.id || null)
-  const [expandedSpaces, setExpandedSpaces] = React.useState<Set<string>>(new Set(["product-team"]))
-  const [showFavorites, setShowFavorites] = React.useState(false)
+  const [showFavorites, setShowFavorites] = React.useState(true)
   const [showNavigationSettings, setShowNavigationSettings] = React.useState(false)
-  console.log({showFavorites})
-  console.log({setShowFavorites})
+  const [editingItem, setEditingItem] = React.useState<TNavigationItem | null>(null)
+  const [newItemTitle, setNewItemTitle] = React.useState("")
+  const [showNewItemDialog, setShowNewItemDialog] = React.useState(false)
+
   function handleProjectChange(project: TProject) {
     setCurrentProject(project)
   }
@@ -126,42 +123,65 @@ export function EnterpriseSidebar({ onNavigate }: EnterpriseSidebarProps) {
     onNavigate?.(href)
   }
 
-  function toggleSpaceExpansion(spaceId: string) {
-    setExpandedSpaces((prev) => {
-      const newSet = new Set(prev)
-      if (newSet.has(spaceId)) {
-        newSet.delete(spaceId)
-      } else {
-        newSet.add(spaceId)
-      }
-      return newSet
-    })
-  }
-
-  function handleSpaceAction(targetSpace: TSpace, action: string) {
-    console.log(`Action: ${action} on space: ${targetSpace.id}`)
+  function handleNavigationAction(item: TNavigationItem, action: string) {
     switch (action) {
       case "open":
-        handleNavigation(`/spaces/${targetSpace.id}`)
-        break
-      case "rename":
-        // Handle rename
+        handleNavigation(item.href || "")
         break
       case "favorite":
-        const updatedPrefs = data?.spaces
-          .filter((s: TSpace) => s.id === targetSpace.id)
-          .map((s: TSpace) => ({
-            itemId: s.id,
-            isFavorite: !s.isFavorite,
-            isVisible: true,
-            position: 0,
-          }))
-        if (updatedPrefs?.length) {
-          updatePreferences(updatedPrefs)
-        }
+        updateItemPreference(item, { isFavorite: item.isFavorite ? 0 : 1 })
+        break
+      case "toggle-visibility":
+        updateItemPreference(item, { isVisible: item.isVisible ? 0 : 1 })
+        break
+      case "edit":
+        setEditingItem(item)
+        setNewItemTitle(item.customLabel || item.title)
+        break
+      case "delete":
+        handleDeleteItem(item)
         break
       default:
         console.log("Unhandled action:", action)
+    }
+  }
+
+  async function updateItemPreference(item: TNavigationItem, updates: Partial<TNavigationPreferenceUI>) {
+    const updatedPrefs: TNavigationPreferenceUI[] = [
+      {
+        itemId: item.id,
+        isVisible: updates.isVisible ?? (item.isVisible ? 1 : 0),
+        isFavorite: updates.isFavorite ?? (item.isFavorite ? 1 : 0),
+        position: item.position || 0,
+        customLabel: updates.customLabel ?? item.customLabel,
+      },
+    ]
+    try {
+      await updatePreferences(updatedPrefs)
+      toast.success("Navigation item updated")
+    } catch (error) {
+      toast.error("Failed to update navigation item")
+    }
+  }
+
+  async function handleDeleteItem(item: TNavigationItem) {
+    try {
+      await updateItemPreference(item, { isVisible: 0 })
+      toast.success("Navigation item removed")
+    } catch (error) {
+      toast.error("Failed to remove navigation item")
+    }
+  }
+
+  async function handleSaveEdit() {
+    if (!editingItem) return
+    try {
+      await updateItemPreference(editingItem, { customLabel: newItemTitle })
+      setEditingItem(null)
+      setNewItemTitle("")
+      toast.success("Navigation item updated")
+    } catch (error) {
+      toast.error("Failed to update navigation item")
     }
   }
 
@@ -170,85 +190,85 @@ export function EnterpriseSidebar({ onNavigate }: EnterpriseSidebarProps) {
 
     return (
       <SidebarMenuItem key={item.id}>
-        <SidebarMenuButton
-          asChild
-          isActive={item.isActive}
-          tooltip={item.title}
-          className="relative hover:bg-[#2a2a2a] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] data-[active=true]:bg-[#3f220d] data-[active=true]:text-[#f76808] text-[#ffffff] h-8 px-3 text-sm group"
-        >
-          <button onClick={() => handleNavigation(item.href)} className="w-full flex items-center gap-3">
-            <div className="relative flex-shrink-0">
-              {IconComponent && <IconComponent className="size-4" />}
-              <NotificationBadge notifications={item.notifications} />
-            </div>
-            <span className="truncate text-sm">{item.title}</span>
-            {item.isFavorite && (
-              <Star className="size-3.5 ml-auto text-[#f76808]" />
-            )}
-          </button>
-        </SidebarMenuButton>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              asChild
+              isActive={item.isActive}
+              tooltip={item.title}
+              className="relative hover:bg-[#2a2a2a] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] data-[active=true]:bg-[#3f220d] data-[active=true]:text-primary text-[#ffffff] h-8 px-3 text-sm group"
+            >
+              <button className="w-full flex items-center gap-3">
+                <div className="relative flex-shrink-0">
+                  {IconComponent && <IconComponent className="size-4" />}
+                  <NotificationBadge notifications={item.notifications} />
+                </div>
+                <span className="truncate text-sm">{item.customLabel || item.title}</span>
+                <div className="ml-auto flex items-center gap-1">
+                  {!item.isVisible && <EyeOff className="size-3.5 text-[#666666]" />}
+                  {item.isFavorite && <Star className="size-3.5 text-red-400" />}
+                </div>
+              </button>
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-[180px]">
+            <DropdownMenuItem onClick={() => handleNavigationAction(item, "open")}>
+              <ChevronRight className="mr-2 h-4 w-4" />
+              Open
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleNavigationAction(item, "favorite")}>
+              <Star className="mr-2 h-4 w-4" />
+              {item.isFavorite ? "Remove from favorites" : "Add to favorites"}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleNavigationAction(item, "toggle-visibility")}>
+              {item.isVisible ? (
+                <>
+                  <EyeOff className="mr-2 h-4 w-4" />
+                  Hide from sidebar
+                </>
+              ) : (
+                <>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Show in sidebar
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => handleNavigationAction(item, "edit")}>
+              <Edit2 className="mr-2 h-4 w-4" />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleNavigationAction(item, "delete")}
+              className="text-red-400"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Remove
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarMenuItem>
     )
   }
 
-  function renderSpace(space: TSpace, level = 0) {
-    const IconComponent = iconMap[space.icon as keyof typeof iconMap]
-    const isExpanded = expandedSpaces.has(space.id)
-    const hasChildren = space.children && space.children.length > 0
+  const noRegularItems = useMemo(() => {
+    return data?.navigationItems?.filter((item: TNavigationItem) => !item.isFavorite)
+  }, [data?.navigationItems])
 
-    return (
-      <React.Fragment key={space.id}>
-        <SidebarMenuItem>
-          <SpaceContextMenu space={space} onAction={(action) => handleSpaceAction(space, action)}>
-            <SidebarMenuButton
-              asChild
-              tooltip={space.name}
-              className="hover:bg-[#2a2a2a] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] text-[#ffffff] h-7 px-3 text-sm group"
-              style={{ paddingLeft: `${0.75 + level * 0.75}rem` }}
-            >
-              <button
-                onClick={() => (hasChildren ? toggleSpaceExpansion(space.id) : handleNavigation(`/spaces/${space.id}`))}
-                className="w-full flex items-center gap-2"
-              >
-                {hasChildren && (
-                  <div className="flex-shrink-0">
-                    {isExpanded ? (
-                      <ChevronDown className="size-3 text-[#b4b4b4]" />
-                    ) : (
-                      <ChevronRight className="size-3 text-[#b4b4b4]" />
-                    )}
-                  </div>
-                )}
-                <div
-                  className="flex aspect-square size-5 items-center justify-center rounded text-white text-xs flex-shrink-0"
-                  style={{ backgroundColor: space.color }}
-                >
-                  {IconComponent && <IconComponent className="size-3.5" />}
-                </div>
-                <span className="truncate text-sm flex-1">{space.name}</span>
-                <div className="ml-auto flex items-center gap-1">
-                  <NotificationBadge notifications={space.notifications} />
-                  {space.isPrivate && <div className="text-[#b4b4b4] text-xs">🔒</div>}
-                  {space.isFavorite && <Star className="size-3.5 text-[#f76808]" />}
-                </div>
-              </button>
-            </SidebarMenuButton>
-          </SpaceContextMenu>
-        </SidebarMenuItem>
-        {hasChildren && isExpanded && space.children?.map((child: TSpace) => renderSpace(child, level + 1))}
-      </React.Fragment>
-    )
-  }
+  const noFavoriteItems = useMemo(() => {
+    return data?.navigationItems?.filter((item: TNavigationItem) => item.isFavorite)
+  }, [data?.navigationItems])
 
-  // Apply navigation preferences to the navigation items
-  const customizedNavigationItems = React.useMemo(() => {
-    if (!data?.navigationItems) return []
-    return applyPreferencesToNavigation(data.navigationItems)
-  }, [data?.navigationItems, applyPreferencesToNavigation])
+  const customizedNavigationItems = useMemo(() => {
+    if (!noRegularItems || !noFavoriteItems) return []
+    return applyPreferencesToNavigation(noRegularItems)
+  }, [noRegularItems, noFavoriteItems, applyPreferencesToNavigation])
 
-  // Filter favorite items
-  const favoriteItems = React.useMemo(() => {
-    return customizedNavigationItems.filter(item => item.isFavorite)
+  const { favoriteItems, regularItems } = useMemo(() => {
+    return {
+      favoriteItems: customizedNavigationItems.filter((item) => item.isFavorite),
+      regularItems: customizedNavigationItems.filter((item) => !item.isFavorite),
+    }
   }, [customizedNavigationItems])
 
   if (sidebarLoading || projectsLoading || preferencesLoading) {
@@ -287,25 +307,38 @@ export function EnterpriseSidebar({ onNavigate }: EnterpriseSidebarProps) {
         </SidebarHeader>
 
         <SidebarContent className="px-1 flex-1 overflow-y-auto">
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-[#b4b4b4] text-xs font-medium px-2 py-1 flex items-center justify-between">
-              Navigation
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowNavigationSettings(true)}
-                className="h-4 w-4 p-0 hover:bg-[#2a2a2a] text-[#b4b4b4] hover:text-white"
-                title="Customize navigation"
-              >
-                <Settings className="size-3" />
-              </Button>
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="space-y-0.5">
-                {customizedNavigationItems.map(renderNavigationItem)}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          {(regularItems && regularItems.length > 0) || true ? (
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-[#b4b4b4] text-xs font-medium px-2 py-1 flex items-center justify-between">
+                Navigation
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowNavigationSettings(true)}
+                  className="h-4 w-4 p-0 hover:bg-[#2a2a2a] text-[#b4b4b4] hover:text-white"
+                  title="Customize navigation"
+                >
+                  <Settings className="size-3" />
+                </Button>
+              </SidebarGroupLabel>
+              {(!regularItems || regularItems.length === 0) && (
+                <div className="px-3 py-4 text-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                      <Compass className="size-4 text-[#666666]" />
+                    </div>
+                    <div className="text-xs text-[#888888]">No navigation items</div>
+                    <div className="text-xs text-[#666666] leading-relaxed">Customize your navigation in settings</div>
+                  </div>
+                </div>
+              )}
+              {regularItems && regularItems.length > 0 && (
+                <SidebarGroupContent>
+                  <SidebarMenu className="space-y-0.5">{regularItems.map(renderNavigationItem)}</SidebarMenu>
+                </SidebarGroupContent>
+              )}
+            </SidebarGroup>
+          ) : null}
 
           <SidebarGroup>
             <SidebarGroupLabel
@@ -313,71 +346,29 @@ export function EnterpriseSidebar({ onNavigate }: EnterpriseSidebarProps) {
               onClick={() => setShowFavorites(!showFavorites)}
             >
               <div className="flex items-center gap-1">
-                {showFavorites ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+                <div className="transition-transform duration-200 ease-in-out">
+                  {showFavorites ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+                </div>
                 Favorites
               </div>
             </SidebarGroupLabel>
-            {showFavorites && favoriteItems.length > 0 && (
-              <SidebarGroupContent>
-                <SidebarMenu className="space-y-0">{favoriteItems.map(renderNavigationItem)}</SidebarMenu>
+            {showFavorites && (
+              <SidebarGroupContent className="transition-all duration-300 ease-in-out">
+                {favoriteItems.length > 0 ? (
+                  <SidebarMenu className="space-y-0">{favoriteItems.map(renderNavigationItem)}</SidebarMenu>
+                ) : (
+                  <div className="px-3 py-4 text-center transition-all duration-300 ease-in-out">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                        <Star className="size-4 text-[#666666]" />
+                      </div>
+                      <div className="text-xs text-[#888888]">No favorites yet</div>
+                      <div className="text-xs text-[#666666] leading-relaxed">Star items to add them here</div>
+                    </div>
+                  </div>
+                )}
               </SidebarGroupContent>
             )}
-            {showFavorites && favoriteItems.length === 0 && (
-              <div className="px-3 py-2 text-sm text-[#b4b4b4]">
-                No favorites yet. Star items to add them here.
-              </div>
-            )}
-          </SidebarGroup>
-
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-[#b4b4b4] text-xs font-medium px-2 py-1 flex items-center justify-between">
-              Spaces
-              <div className="flex items-center gap-1">
-                <Button variant="ghost" size="sm" className="h-4 w-4 p-0 hover:bg-[#2a2a2a] text-[#b4b4b4]">
-                  <Search className="size-3" />
-                </Button>
-                <Button variant="ghost" size="sm" className="h-4 w-4 p-0 hover:bg-[#2a2a2a] text-[#b4b4b4]">
-                  <Plus className="size-3" />
-                </Button>
-              </div>
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="space-y-0.5">
-                {data.spaces.map((space: TSpace) => renderSpace(space))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu className="space-y-0">
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    className="hover:bg-[#2a2a2a] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] h-7 px-3 text-sm"
-                  >
-                    <button onClick={() => handleNavigation("/spaces")} className="w-full flex items-center gap-3">
-                      <MoreHorizontal className="size-4" />
-                      <span>View all Spaces</span>
-                    </button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    className="hover:bg-[#2a2a2a] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] h-7 px-3 text-sm"
-                  >
-                    <button
-                      onClick={() => handleNavigation("/create-space")}
-                      className="w-full flex items-center gap-3"
-                    >
-                      <Plus className="size-4" />
-                      <span>Create Space</span>
-                    </button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
 
@@ -393,16 +384,40 @@ export function EnterpriseSidebar({ onNavigate }: EnterpriseSidebarProps) {
       <NavigationSettingsDialog
         open={showNavigationSettings}
         onOpenChange={setShowNavigationSettings}
-        navigationItems={data.navigationItems}
+        navigationItems={customizedNavigationItems}
         onSave={updatePreferences}
         currentPreferences={preferences.map((pref) => ({
           itemId: pref.itemId,
-          isVisible: Boolean(pref.isVisible),
-          isFavorite: Boolean(pref.isFavorite),
+          isVisible: pref.isVisible,
+          isFavorite: pref.isFavorite,
           position: pref.position,
-          customLabel: pref.customLabel || undefined,
+          customLabel: pref.customLabel,
         }))}
       />
+
+      <Dialog open={!!editingItem} onOpenChange={() => setEditingItem(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Navigation Item</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Custom Label</Label>
+              <Input
+                value={newItemTitle}
+                onChange={(e) => setNewItemTitle(e.target.value)}
+                placeholder="Enter custom label..."
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setEditingItem(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit}>Save Changes</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

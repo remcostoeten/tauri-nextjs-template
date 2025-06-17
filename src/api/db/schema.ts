@@ -8,20 +8,17 @@
 export * from '@/module/authentication/api/schemas';
 export * from '@/module/project/api/schema/project-schema';
 export * from '@/module/dashboard/api/schema/navigation-preferences-schema';
-export * from '@/api/db/schema/tasks';
-export { taskSections } from '@/api/db/schema/task-sections';
+export * from '@/module/task/api/schemas/task-schema';
+export * from '@/module/task/api/schemas/task-section-schema';
 
-// Type definitions
-export * from '@/typings/base';
+export * from '@/shared/types/base';
 export * from '@/typings/auth';
 export * from '@/typings/task';
 export * from '@/typings/project';
 export * from '@/module/dashboard/types/sidebar-types';
 
-// Zod schemas
 export * from '@/schemas';
 
-// Ensure all types are properly namespaced to avoid conflicts
 export type {
     TProject,
     TNewProject,
@@ -35,7 +32,12 @@ export type {
 export type {
     TTask,
     TNewTask,
-} from '@/api/db/schema/tasks';
+} from '@/module/task/api/schemas/task-schema';
+
+export type {
+    TTaskSection,
+    TNewTaskSection,
+} from '@/module/task/api/schemas/task-section-schema';
 
 export type {
     TNotification,

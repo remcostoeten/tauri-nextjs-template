@@ -14,6 +14,47 @@ Use Tauri 2.0 API only.
 - Prefix EVERY type with `T` e.g. `TFoo`. If there is only one type which isn't exported we call the type `TProps` by default.
 - A page may never contain logic, only a `view` which sits over at `src/views`.
 
+## Base Types & Schemas
+- Every entity must extend `TBaseEntity` from `@/shared/types/base`
+- Base entity includes: `id`, `createdAt`, `updatedAt`
+- Use schema helpers from `@/api/db/schema/base-entity`:
+  - `createTable()` for creating tables with base fields
+  - `TBaseTable<T>` for inferring entity types from tables
+  - `TBaseInsert<T>` for inferring insert types
+- Schema example:
+```typescript
+import { text } from "drizzle-orm/sqlite-core";
+import { createTable, TBaseTable } from "@/api/db/schema/base-entity";
+
+export const users = createTable("users", {
+    email: text("email").notNull(),
+    name: text("name"),
+});
+
+export type TUser = TBaseTable<typeof users>;
+export type TNewUser = TBaseInsert<typeof users>;
+```
+
+## CRUD Factory
+- Use `useCrudFactory` from `@/shared/hooks/use-crud-factory` for all CRUD operations
+- Factory requires operations object with: `getAll`, `create`, `update`, `delete`
+- Operations must follow base entity patterns
+- Example usage:
+```typescript
+function useUsers() {
+    const operations = useMemo(() => ({
+        getAll: async () => db.select().from(users),
+        create: async (data: TNewUser) => db.insert(users).values(data).returning(),
+        update: async (id: string, data: Partial<TNewUser>) => 
+            db.update(users).set(data).where(eq(users.id, id)).returning(),
+        delete: async (id: string) => 
+            db.delete(users).where(eq(users.id, id))
+    }), []);
+
+    return useCrudFactory<TUser, TNewUser>(operations);
+}
+```
+
 ## Helpers
 - use `@/core/shared/if-tauri` and `@/core/shared/if-web` to conditionally render components based on the platform. Some api's are only available in the tauri app, so you don't want to render components that use those api's on the web.
 
@@ -23,10 +64,21 @@ Don't ever touch the `drizzle.config.ts`
 - The main schema is only responsible for re-exporting schemas comming from `src/module/MODULENAME/api/{MODULENAME-schema.ts,schemas/SUBMODULE-schemas.ts}`
 - The `src/api/db/schema.ts` is only responsible for re-exporting the main schema
 - The database can be imported like so: `import {db} from "@/api/db/connection.ts"`
+- All database fields must use the appropriate helper functions:
+  - `cuidId` for ID fields
+  - `timestamps` for created_at/updated_at
+  - These are available from `@/api/db/helpers`
 
 ## API layer
 - Never use `route.ts` or api routes Only server functions.
 - Inside each module there is an `api` folder. This folder contains the server functions.
 - Each server function is namespaced by it's module. For example, the `tasks` module has a `tasks` folder inside the `api` folder. This folder contains all the server functions related to tasks. 
-- Each api folder can consist of :`mutations`, `queries`, a `MODULENAME-repository.ts`, `schema`,`validators` and  when necessary `service(s)`.
+- Each api folder can consist of:
+  - `mutations` - Server actions for creating/updating/deleting
+  - `queries` - Server actions for fetching data
+  - `MODULENAME-repository.ts` - Database operations
+  - `schema` - Drizzle schemas using base entity
+  - `validators` - Input validation
+  - `services` - Complex business logic (when necessary)
 - For CRUD operations we have a factory `useCrudFactory`
+- All mutations/queries should return `TBaseResponse` or `TBaseMutationResponse`

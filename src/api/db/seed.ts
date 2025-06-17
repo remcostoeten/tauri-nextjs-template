@@ -3,8 +3,8 @@ import { createClient } from "@libsql/client";
 import { projects } from "./schema";
 
 const client = createClient({
-    url: "libsql://learning-newton-destine-remcostoeten.aws-eu-west-1.turso.io",
-    authToken: "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NTAwODE1MjgsImlkIjoiZGJlMzU2ZTItOWNjOS00OGZhLWIwYTUtMDI1NTExMzIxYjYzIiwicmlkIjoiNDI3ZmMzMzMtMzI5Ni00ODgzLTg5ODQtODAxNjEzM2ZhZTFkIn0.6z8NuAxuZDR2TIGbsXVfqWnMMBJaHWrFK_L52vNakxjoAHEzcvQymZr__uT5UEBFqoPzh8Rib54tHhbGn6bPDw"
+    url: 'libsql://rare-aquagirl-remcostoeten.aws-eu-west-1.turso.io',
+    authToken: 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NTAxODcyMTUsImlkIjoiY2IyOTUxMWUtMGI2NS00NjMxLWFkMGUtMWNiMDEzZTY0NGIwIiwicmlkIjoiMjRhYWQyNWEtODNkOS00ZmJiLWEzYWYtODJlODA3NDNlY2NjIn0.i3VDSSHtqSmJS3N0KkBS06esGsKe-WL-c7zeeVBXVD8a94EnTa3OdePr4n-s3lPYmRcPSVFiJmazBm0X0Y6DCA'
 });
 
 const db = drizzle(client, { schema: { projects } });
@@ -12,7 +12,6 @@ const db = drizzle(client, { schema: { projects } });
 async function seed() {
     console.log("Seeding database...");
     try {
-        // Insert a default project
         await db.insert(projects).values({
             name: "Default Project",
             description: "This is the default project",

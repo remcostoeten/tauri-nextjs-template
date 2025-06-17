@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { TProject, TNewProject } from '@/module/project/api/schema/project-schema';
 import {
     Card,
@@ -14,90 +13,46 @@ import { Button } from '@/shared/ui/button';
 import { CreateProjectDialog } from './create-project-dialog';
 import { DeleteProjectDialog } from './delete-project-dialog';
 import { EditProjectDialog } from './edit-project-dialog';
-import { toast } from 'sonner';
+import { useProjects } from '@/module/dashboard/hooks/use-projects';
+import { useState } from 'react';
 
 export function ProjectList() {
-    const [projects, setProjects] = useState<TProject[]>([]);
-    const [loading, setLoading] = useState(true);
+    const {
+        projects,
+        createProject,
+        updateProject,
+        deleteProject,
+        isLoading: loading,
+        error,
+    } = useProjects();
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [showEditDialog, setShowEditDialog] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [selectedProject, setSelectedProject] = useState<TProject | null>(null);
 
-    async function fetchProjects() {
-        try {
-            const response = await fetch('/api/projects');
-            if (!response.ok) {
-                throw new Error('Failed to fetch projects');
-            }
-            const data = await response.json();
-            setProjects(data);
-        } catch (error) {
-            toast.warning('Failed to fetch projects');
-        } finally {
-            setLoading(false);
-        }
-    }
-
     async function handleCreateProject(project: TNewProject) {
-        try {
-            const response = await fetch('/api/projects', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(project),
-            });
-            if (!response.ok) {
-                throw new Error('Failed to create project');
-            }
-            await fetchProjects();
-        } catch (error) {
-            toast.error('Failed to create project');
-            throw error;
-        }
+        await createProject(project);
+        setShowCreateDialog(false);
     }
 
     async function handleUpdateProject(id: string, updates: Partial<TNewProject>) {
-        try {
-            const response = await fetch(`/api/projects/${id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(updates),
-            });
-            if (!response.ok) {
-                throw new Error('Failed to update project');
-            }
-            await fetchProjects();
-        } catch (error) {
-            toast.error('Failed to update project');
-            throw error;
-        }
+        await updateProject(id, updates);
+        setShowEditDialog(false);
+        setSelectedProject(null);
     }
 
     async function handleDeleteProject(id: string) {
-        try {
-            const response = await fetch(`/api/projects/${id}`, {
-                method: 'DELETE',
-            });
-            if (!response.ok) {
-                throw new Error('Failed to delete project');
-            }
-            await fetchProjects();
-        } catch (error) {
-            toast.error('Failed to delete project');
-            throw error;
-        }
+        await deleteProject(id);
+        setShowDeleteDialog(false);
+        setSelectedProject(null);
     }
-
-    useEffect(() => {
-        fetchProjects();
-    }, []);
 
     if (loading) {
         return <div>Loading projects...</div>;
+    }
+
+    if (error) {
+        return <div>Error: {error}</div>;
     }
 
     return (
@@ -122,25 +77,25 @@ export function ProjectList() {
                                 Status: {project.status}
                             </div>
                         </CardContent>
-                        <CardFooter className="flex justify-end space-x-2">
-                            <EditProjectDialog
-                                open={showEditDialog && selectedProject?.id === project.id}
-                                onOpenChange={(open) => {
-                                    setShowEditDialog(open);
-                                    if (!open) setSelectedProject(null);
+                        <CardFooter>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setSelectedProject(project);
+                                    setShowEditDialog(true);
                                 }}
-                                project={project}
-                                onUpdateProject={handleUpdateProject}
-                            />
-                            <DeleteProjectDialog
-                                open={showDeleteDialog && selectedProject?.id === project.id}
-                                onOpenChange={(open) => {
-                                    setShowDeleteDialog(open);
-                                    if (!open) setSelectedProject(null);
+                            >
+                                Edit
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setSelectedProject(project);
+                                    setShowDeleteDialog(true);
                                 }}
-                                project={project}
-                                onDeleteProject={handleDeleteProject}
-                            />
+                            >
+                                Delete
+                            </Button>
                             <Button variant="outline" asChild>
                                 <a href={`/dashboard/projects/${project.id}`}>
                                     View Details
@@ -160,6 +115,25 @@ export function ProjectList() {
                     </Card>
                 )}
             </div>
+
+            <EditProjectDialog
+                open={showEditDialog}
+                onOpenChange={(open) => {
+                    setShowEditDialog(open);
+                    if (!open) setSelectedProject(null);
+                }}
+                project={selectedProject}
+                onUpdateProject={handleUpdateProject}
+            />
+            <DeleteProjectDialog
+                open={showDeleteDialog}
+                onOpenChange={(open) => {
+                    setShowDeleteDialog(open);
+                    if (!open) setSelectedProject(null);
+                }}
+                project={selectedProject}
+                onDeleteProject={handleDeleteProject}
+            />
         </div>
     );
 } 

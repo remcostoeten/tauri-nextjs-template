@@ -138,7 +138,7 @@ export function FancyWorkspaceSelector({
                         <span className="text-xs text-[#b4b4b4] truncate">{project.description}</span>
                       )}
                     </div>
-                    {project.id === currentProject.id && <Check className="size-4 text-[#f76808]" />}
+                    {project.id === currentProject.id && <Check className="size-4 text-red-400  AAAA" />}
                   </DropdownMenuItem>
 
                   {/* Action buttons */}
@@ -172,7 +172,7 @@ export function FancyWorkspaceSelector({
               onSelect={() => setShowCreateDialog(true)}
               className="text-white hover:bg-[#2a2a2a] cursor-pointer rounded-lg p-3 transition-all duration-200"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-[#f76808] text-white mr-3 shadow-md">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-red-400  AAAA text-white mr-3 shadow-md">
                 <Plus className="size-4" />
               </div>
               <div className="flex flex-col flex-1">

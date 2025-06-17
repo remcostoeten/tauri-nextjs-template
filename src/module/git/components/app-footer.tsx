@@ -1,13 +1,12 @@
 "use client"
-
+// 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { GitBranch, GitCommit, Clock, Monitor, Globe, ExternalLink } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { GitBranch, GitCommit, Clock, Monitor, Globe, ExternalLink, ChevronsUp } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import { Badge } from '@/shared/ui/badge'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { Card, CardContent } from '@/shared/ui/card'
-import { useAppFooterData } from '@/module/git/hooks'
 
 type TCommit = {
     sha: string
@@ -20,6 +19,8 @@ type TCommit = {
         }
     }
 }
+
+import { useAppFooterData } from '@/module/git/hooks'
 
 function CommitTree({ commits, is_stale }: { commits?: TCommit[], is_stale?: boolean }) {
     if (!commits || commits.length === 0) {
@@ -95,8 +96,9 @@ function CommitTree({ commits, is_stale }: { commits?: TCommit[], is_stale?: boo
     )
 }
 
-export function AppFooter() {
+export function AppFooter({ autoHide = true }: { autoHide?: boolean }) {
     const [isHovered, setIsHovered] = useState(false)
+    const [isAutoHidden, setIsAutoHidden] = useState(autoHide)
     const [appName, setAppName] = useState('')
     const {
         version,
@@ -128,7 +130,9 @@ export function AppFooter() {
         fetchAppName();
     }, [is_desktop, projectName]);
 
-
+    useEffect(() => {
+        setIsAutoHidden(autoHide);
+    }, [autoHide]);
 
     if (is_error) {
         return null
@@ -136,12 +140,16 @@ export function AppFooter() {
 
     const displayCommit = latest_commit || (recent_commits.length > 0 ? recent_commits[0] : null)
 
+    const handleToggleFooter = () => {
+        setIsAutoHidden(!isAutoHidden);
+    };
+
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50">
             <div
-                className={`absolute bottom-full left-4 right-4 md:left-8 md:right-auto md:max-w-md transform transition-all duration-300 ease-out ${isHovered && recent_commits.length > 0
-                        ? 'translate-y-0 opacity-100 pointer-events-auto'
-                        : 'translate-y-2 opacity-0 pointer-events-none'
+                className={`absolute bottom-full left-4 right-4 md:left-8 md:right-auto md:max-w-md transform transition-all duration-300 ease-out ${isHovered && recent_commits.length > 0 && !isAutoHidden
+                    ? 'translate-y-0 opacity-100 pointer-events-auto'
+                    : 'translate-y-2 opacity-0 pointer-events-none'
                     }`}
             >
                 <Card className="mb-2 shadow-xl border-2">
@@ -154,10 +162,19 @@ export function AppFooter() {
                 </Card>
             </div>
 
-            <footer
+            <motion.footer
                 className="bg-background/95 backdrop-blur-sm border-t shadow-lg"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
+                animate={{
+                    y: isAutoHidden ? '100%' : '0%'
+                }}
+                transition={{
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 30,
+                    duration: 0.3
+                }}
             >
                 <div className="container mx-auto px-4 py-3">
                     <div className="flex items-center justify-between gap-4">
@@ -205,7 +222,6 @@ export function AppFooter() {
                                         </div>
                                     )
                                 )}
-
                             </div>
                         </div>
 
@@ -240,84 +256,29 @@ export function AppFooter() {
                         </div>
                     </div>
                 </div>
-            </footer>
-        </div>
-    )
-}
+            </motion.footer>
 
-// Demo component with sample data
-export default function AppFooterDemo() {
-    const sampleCommits: TCommit[] = [
-        {
-            sha: "a1b2c3d4e5f6",
-            commit: {
-                message: "feat: add new dashboard components with improved styling",
-                link: "https://github.com/example/repo/commit/a1b2c3d4e5f6",
-                author: {
-                    name: "John Doe",
-                    date: new Date(Date.now() - 1000 * 60 * 30).toISOString() // 30 minutes ago
-                }
-            }
-        },
-        {
-            sha: "b2c3d4e5f6g7",
-            commit: {
-                message: "fix: resolve authentication issues in login flow",
-                link: "https://github.com/example/repo/commit/b2c3d4e5f6g7",
-                author: {
-                    name: "Jane Smith",
-                    date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() // 2 hours ago
-                }
-            }
-        },
-        {
-            sha: "c3d4e5f6g7h8",
-            commit: {
-                message: "docs: update README with installation instructions",
-                author: {
-                    name: "Bob Johnson",
-                    date: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString() // 5 hours ago
-                }
-            }
-        },
-        {
-            sha: "d4e5f6g7h8i9",
-            commit: {
-                message: "refactor: optimize database queries for better performance",
-                link: "https://github.com/example/repo/commit/d4e5f6g7h8i9",
-                author: {
-                    name: "Alice Brown",
-                    date: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() // 1 day ago
-                }
-            }
-        }
-    ]
-
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pb-20">
-            <div className="container mx-auto p-8">
-                <div className="max-w-2xl mx-auto">
-                    <h1 className="text-3xl font-bold mb-4">App Footer Demo</h1>
-                    <p className="text-muted-foreground mb-8">
-                        Hover over the footer at the bottom to see the commit history popup.
-                    </p>
-
-                    <div className="space-y-4">
-                        <Card>
-                            <CardContent className="p-6">
-                                <h2 className="text-xl font-semibold mb-2">Features</h2>
-                                <ul className="space-y-2 text-sm text-muted-foreground">
-                                    <li>• Hover to reveal commit history</li>
-                                    <li>• Responsive design for mobile and desktop</li>
-                                    <li>• Loading states and error handling</li>
-                                    <li>• External link support for commits</li>
-                                    <li>• Cached data indicators</li>
-                                </ul>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-            </div>
+            <AnimatePresence>
+                {autoHide && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.2, type: "spring", stiffness: 100, damping: 10 }}
+                        className="fixed bottom-0 left-1/2 transform -translate-x-1/2 z-50 cursor-pointer"
+                        onClick={handleToggleFooter}
+                        onMouseEnter={handleToggleFooter}
+                    >
+                        <motion.div
+                            animate={{ rotate: isAutoHidden ? 0 : 180 }}
+                            transition={{ duration: 0.3 }}
+                            className="rounded-t-md px-2 py-1 shadow-sm hover:bg-background transition-all"
+                        >
+                            <ChevronsUp className="w-3 h-3" />
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }

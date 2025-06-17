@@ -5,43 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1750081478468,
-      "tag": "0000_sparkling_wallflower",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1750081837448,
-      "tag": "0001_romantic_iron_fist",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1750087638799,
-      "tag": "0002_kind_shinobi_shaw",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1750089870673,
-      "tag": "0003_messy_vance_astro",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1750090784628,
-      "tag": "0004_square_mentor",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1750090834955,
-      "tag": "0005_cynical_overlord",
+      "when": 1750187394821,
+      "tag": "0000_jittery_scalphunter",
       "breakpoints": true
     }
   ]

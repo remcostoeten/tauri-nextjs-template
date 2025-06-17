@@ -1,10 +1,13 @@
 import {  TooltipProvider } from '@/shared/ui/'
+import { SidebarProvider } from '@/shared/ui/sidebar'
 import { ToastProvider } from '@/shared/ui/toast'
 
-export function Providers({ children }: children) {
+export function Providers({ children }: { children: React.ReactNode }) {
 	return (
-		<TooltipProvider delayDuration={0}>
-			<ToastProvider>{children}</ToastProvider>
-		</TooltipProvider>
+		<SidebarProvider>
+			<TooltipProvider delayDuration={0}>
+				<ToastProvider>{children}</ToastProvider>
+			</TooltipProvider>
+		</SidebarProvider>
 	)
 }

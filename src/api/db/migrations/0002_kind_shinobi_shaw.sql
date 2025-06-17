@@ -1,1 +1,0 @@
-ALTER TABLE `navigation_preferences` ADD `is_favorite` integer DEFAULT 0 NOT NULL;

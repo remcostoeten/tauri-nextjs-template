@@ -111,7 +111,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
     }
 
     return (
-        <div className={cn('flex min-h-screen items-center justify-center', className)} {...props}>
+        <div className={cn('flex min-h-screen items-center justify-center w-screen', className)} {...props}>
             <div className="w-full max-w-[720px] px-4">
   
 
