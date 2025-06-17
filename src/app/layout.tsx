@@ -4,7 +4,7 @@ import "@/styles/globals.css";
 import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
 import {WindowControls} from "@/components/window/window-controls";
-import { Toaster } from "@/shared/ui/sonner";
+import { Toaster } from "sonner";
 import { ThemeProvider } from '@/styles/themes';
 import { PlatformDebug } from '@/components/debug/platform-debug';
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { Hero } from "@/components/effects/dots-landing";
 import { Button } from "@/shared/ui";
 import { BrowserEnvironmentNotification } from "@/shared/ui/browser-environment-notification";
 import { invoke } from "@tauri-apps/api/core";
@@ -20,7 +19,6 @@ export default function IndexView() {
 
     return (
         <>
-            <Hero />
             <div className="flex flex-col gap-2 items-start">
                 <Button
                     onClick={greet}

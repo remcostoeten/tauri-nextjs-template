@@ -14,7 +14,7 @@ import { Button } from '@/shared/ui/button';
 import { CreateProjectDialog } from './create-project-dialog';
 import { DeleteProjectDialog } from './delete-project-dialog';
 import { EditProjectDialog } from './edit-project-dialog';
-import { toast } from '@/shared/ui';
+import { toast } from 'sonner';
 
 export function ProjectList() {
     const [projects, setProjects] = useState<TProject[]>([]);

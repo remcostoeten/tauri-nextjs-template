@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Only use types
+Types are prefixewd with T eg. TFoo
+If only 1 type and its not exported bty default c all it TProps.
+Only write functional style
+No arrow constants
+No classes.
+Only use tauri 2.0 api
