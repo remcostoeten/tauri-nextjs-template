@@ -4,7 +4,7 @@ import { Waves } from '@/components/effects/waves';
 import { Logo } from '@/components/logo';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
@@ -16,8 +16,12 @@ import { login } from '../api/mutations/login';
 import { DiscordLoginButton } from './discord-login';
 import { GitHubLoginButton } from './github-login';
 import { GoogleLoginButton } from './google-login';
+import { WEEECheckbox } from '@/shared/ui/weee-checkbox';
+import { loadRememberMeCredentials, saveRememberMeCredentials } from '../helpers/remember-me';
+import { IfTauri } from '@/shared/core/if-tauri';
+import { IfWeb } from '@/shared/core/if-web';
 import { toast } from 'sonner';
-    
+
 function LoginButton() {
     const { pending } = useFormStatus();
 
@@ -33,6 +37,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
     const { theme } = useTheme();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const [rememberMe, setRememberMe] = useState(false);
 
     useEffect(() => {
         const toastType = searchParams.get('toast');
@@ -52,14 +57,44 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
         }
     }, [searchParams]);
 
+    // Load saved credentials on mount
+    useEffect(() => {
+        const loadSavedCredentials = async () => {
+            try {
+                const saved = await loadRememberMeCredentials();
+                if (saved && formRef.current) {
+                    const emailInput = formRef.current.querySelector('input[name="email"]') as HTMLInputElement;
+                    if (emailInput) {
+                        emailInput.value = saved.email;
+                        setRememberMe(true);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load saved credentials:', error);
+            }
+        };
+
+        loadSavedCredentials();
+    }, []);
+
     async function handleSubmit(formData: FormData) {
         try {
+            const email = formData.get('email')?.toString() || '';
+
             const result = await login(formData);
 
             if (!result.success) {
                 toast.error(`Login failed - ${result.error || 'Authentication failed'}`);
                 formRef.current?.reset();
                 return;
+            }
+
+            // Save remember me credentials if login was successful
+            if (email) {
+                await saveRememberMeCredentials({
+                    email,
+                    rememberMe
+                });
             }
 
             toast.success('Login successful - Redirecting...');
@@ -78,12 +113,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
     return (
         <div className={cn('flex min-h-screen items-center justify-center', className)} {...props}>
             <div className="w-full max-w-[720px] px-4">
-                <div className="flex justify-center mb-6">
-                    <Logo />
-                </div>
+  
 
                 <Card className="overflow-hidden py-0">
-                    <CardContent className="grid p-0 md:grid-cols-2 h-full">
+                <div className="absolute top-0 left-0 w-full h-40 flex items-center justify-center pointer-events-none z-10">
+    <Logo />
+</div>              <CardContent className="grid p-0 md:grid-cols-2 h-full">
                         <form
                             ref={formRef}
                             action={handleSubmit}
@@ -109,15 +144,18 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                             </div>
 
                             <div className="flex items-center space-x-2">
-                                <input
-                                    type="checkbox"
+                                <WEEECheckbox
                                     id="remember"
                                     name="remember"
-                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                    checked={rememberMe}
+                                    onChange={() => setRememberMe(!rememberMe)}
                                 />
                                 <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
-                                    Remember me
+                                    <IfTauri>Remember me (secure storage)</IfTauri>
+                                    <IfWeb>Remember me (browser storage)</IfWeb>
                                 </Label>
+                                {/* Hidden input for form submission */}
+                                <input type="hidden" name="remember" value={rememberMe ? 'on' : ''} />
                             </div>
 
                             <LoginButton />
@@ -167,8 +205,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                 </Card>
 
                 <div className="mt-4 text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
-                    By continuing, you agree to our <Link href="#">Terms of Service</Link> and{' '}
-                    <Link href="#">Privacy Policy</Link>.
+                    By continuing, you agree to our <Link href="/terms">Terms of Service</Link> and{' '}
+                    <Link href="/privacy">Privacy Policy</Link>.
                 </div>
             </div>
         </div>

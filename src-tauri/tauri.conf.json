@@ -13,13 +13,16 @@
     "security": {
       "csp": null
     },
+    "macOSPrivateApi": true,
     "windows": [
       {
         "fullscreen": false,
         "resizable": true,
         "title": "Skibidado",
-        "width": 800,
-        "height": 600
+        "width": 1280,
+        "height": 800,
+        "decorations": false,
+        "transparent": true
       }
     ]
   },

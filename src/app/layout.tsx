@@ -1,34 +1,23 @@
 'use client'
 
-import { Geist, Geist_Mono } from "next/font/google";
-import "../styles/globals.css";
-import { Version } from '@/components/Version';
+import "@/styles/globals.css";
+import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
+import {WindowControls} from "@/components/window/window-controls";
 import { Toaster } from "@/shared/ui/sonner";
 import { ThemeProvider } from '@/styles/themes';
+import { PlatformDebug } from '@/components/debug/platform-debug';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Providers>
         <ThemeProvider>
-          <div className="max-h-[100vh]">
-            
-            {children}
-            </div>
-          <div className="fixed bottom-4 right-4">
-            <Version />
-          </div>
+          <WindowControls />
+          {children}
+          <PlatformDebug />
           <Toaster />
         </ThemeProvider>
       </Providers>
@@ -38,12 +27,12 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+      <body className={inter.className}>
         <ClientLayout>
           {children}
         </ClientLayout>

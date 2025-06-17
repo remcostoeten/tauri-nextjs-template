@@ -8,11 +8,12 @@ import { GitHubLoginButton } from '@/module/authentication/ui/github-login';
 import { GoogleLoginButton } from '@/module/authentication/ui/google-login';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button, Card, CardContent, Input, Label } from '@/shared/ui';
 import { cn } from '@/shared/helpers';
 import { toast } from 'sonner';
+import { WEEECheckbox } from '@/shared/ui/weee-checkbox';
 
 function RegisterButton() {
     const { pending } = useFormStatus();
@@ -28,6 +29,7 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<'div'
     const formRef = useRef<HTMLFormElement>(null);
     const router = useRouter();
     const searchParams = useSearchParams();
+    const [termsAccepted, setTermsAccepted] = useState(false);
 
     useEffect(() => {
         const toastType = searchParams.get('toast');
@@ -49,6 +51,12 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<'div'
 
     async function handleSubmit(formData: FormData) {
         try {
+            // Validate terms acceptance
+            if (!termsAccepted) {
+                toast.error('Please accept the Terms of Service and Privacy Policy to continue');
+                return;
+            }
+
             const result = await register(formData);
 
             if (!result?.success) {
@@ -71,11 +79,10 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<'div'
     return (
         <div className={cn('flex min-h-screen items-center justify-center', className)} {...props}>
             <div className="w-full max-w-[720px] px-4">
-                <div className="flex justify-center mb-6">
-                    <Logo />
-                </div>
-
                 <Card className="overflow-hidden py-0">
+                <div className="absolute top-0 left-0 w-full h-40 flex items-center justify-center pointer-events-none z-10">
+    <Logo />
+</div>     
                     <CardContent className="grid p-0 md:grid-cols-2 h-full">
                         <form
                             ref={formRef}
@@ -102,8 +109,25 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<'div'
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
-                                <Input id="password" name="password" type="password" required />
+                                <div className="flex items-center space-x-2">
+                                    <WEEECheckbox
+                                        id="terms"
+                                        name="terms"
+                                        checked={termsAccepted}
+                                        onChange={() => setTermsAccepted(!termsAccepted)}
+                                    />
+                                    <Label htmlFor="terms" className="text-sm font-normal cursor-pointer">
+                                        I agree to the{' '}
+                                        <Link href="/terms" className="text-primary hover:underline">
+                                            Terms of Service
+                                        </Link>{' '}
+                                        and{' '}
+                                        <Link href="/privacy" className="text-primary hover:underline">
+                                            Privacy Policy
+                                        </Link>
+                                    </Label>
+                                </div>
+                                <input type="hidden" name="terms" value={termsAccepted ? 'on' : ''} />
                             </div>
 
                             <RegisterButton />
@@ -135,8 +159,8 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<'div'
                 </Card>
 
                 <div className="mt-4 text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
-                    By continuing, you agree to our <Link href="#">Terms of Service</Link> and{' '}
-                    <Link href="#">Privacy Policy</Link>.
+                    By continuing, you agree to our <Link href="/terms">Terms of Service</Link> and{' '}
+                    <Link href="/privacy">Privacy Policy</Link>.
                 </div>
             </div>
         </div>

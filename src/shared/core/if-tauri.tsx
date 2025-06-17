@@ -5,6 +5,7 @@
 
 'use client'
 
+import React from 'react';
 import { usePlatform } from '../hooks/use-platform';
 
 export function IfTauri({ children }: { children: React.ReactNode }) {

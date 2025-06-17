@@ -81,20 +81,35 @@ export function useAppFooterData(): TAppFooterData {
     }
 
     const fetchVersion = async (): Promise<{ version: string; projectName: string }> => {
+        console.log('🔍 fetchVersion called, isTauri:', isTauri);
+
         if (isTauri) {
             try {
+                console.log('📱 Fetching version from Tauri...');
+                // Use dynamic import to ensure Tauri API is available
+                const { invoke } = await import('@tauri-apps/api/core');
                 const version = await invoke('get_current_version') as string
                 const projectName = await invoke('get_project_name') as string
+                console.log('✅ Tauri version fetched:', { version, projectName });
                 return { version, projectName }
             } catch (error) {
-                console.error('Failed to fetch version from Tauri:', error)
+                console.error('❌ Failed to fetch version from Tauri:', error)
+                // Fallback to default values if Tauri commands fail
+                const fallback = {
+                    version: '0.08', // Default version for Tauri
+                    projectName: 'Skibidado'
+                };
+                console.log('🔄 Using Tauri fallback:', fallback);
+                return fallback;
             }
         }
 
-        return {
-            version: process.env.NEXT_PUBLIC_APP_VERSION || process.env.npm_package_version || '1.0.0',
+        const webVersion = {
+            version: process.env.NEXT_PUBLIC_APP_VERSION || process.env.npm_package_version || '0.08',
             projectName: 'Skibidado'
-        }
+        };
+        console.log('🌐 Using web version:', webVersion);
+        return webVersion;
     }
 
     const fetchCommits = async (): Promise<TGitHubCommit[]> => {

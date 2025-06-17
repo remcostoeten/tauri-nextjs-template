@@ -5,7 +5,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@i @custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark *));
 
 @theme {
   --font-sans: var(--font-geist-sans);
@@ -166,5 +166,19 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  @keyframes shine {
+    0% {
+      background-position: 100%;
+    }
+    100% {
+      background-position: -100%;
+    }
+  }
+  .animate-shine {
+    animation: shine 5s linear infinite;
   }
 }

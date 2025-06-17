@@ -2,14 +2,14 @@
 
 import { useState, useCallback } from "react"
 
-export type CrudItem = {
+export type TCrudItem = {
   id: string
   createdAt?: string | Date | null
   updatedAt?: string | Date | null
   [key: string]: any
 }
 
-export type CrudOperations<T extends CrudItem, U = Omit<T, "id" | "createdAt" | "updatedAt">> = {
+export type TCrudOperations<T extends TCrudItem, U = Omit<T, "id" | "createdAt" | "updatedAt">> = {
   create: (item: U) => Promise<T>
   update: (id: string, updates: Partial<U>) => Promise<T>
   delete: (id: string) => Promise<void>
@@ -17,7 +17,7 @@ export type CrudOperations<T extends CrudItem, U = Omit<T, "id" | "createdAt" | 
   getById?: (id: string) => Promise<T | undefined>
 }
 
-export function useCrudFactory<T extends CrudItem, U = Omit<T, "id" | "createdAt" | "updatedAt">>(operations: CrudOperations<T, U>) {
+export function useCrudFactory<T extends TCrudItem, U = Omit<T, "id" | "createdAt" | "updatedAt">>(operations: TCrudOperations<T, U>) {
   const [items, setItems] = useState<T[]>([])
   const [currentItem, setCurrentItem] = useState<T | null>(null)
   const [isLoading, setIsLoading] = useState(false)

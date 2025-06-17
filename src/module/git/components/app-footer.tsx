@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { GitBranch, GitCommit, Clock, Monitor, Globe, ExternalLink } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import { Badge } from '@/shared/ui/badge'
@@ -95,8 +96,11 @@ function CommitTree({ commits, is_stale }: { commits?: TCommit[], is_stale?: boo
 }
 
 export function AppFooter() {
+    const [isHovered, setIsHovered] = useState(false)
+    const [appName, setAppName] = useState('')
     const {
         version,
+        projectName,
         latest_commit,
         recent_commits,
         is_loading,
@@ -104,8 +108,27 @@ export function AppFooter() {
         is_stale,
         is_desktop
     } = useAppFooterData();
-    
-    const [isHovered, setIsHovered] = useState(false)
+
+    useEffect(() => {
+        const fetchAppName = async () => {
+            if (is_desktop) {
+                try {
+                    const { getName } = await import("@tauri-apps/plugin-app");
+                    const name = await getName();
+                    setAppName(name);
+                } catch (error) {
+                    console.error('Failed to get app name:', error);
+                    setAppName(projectName || 'Skibidado');
+                }
+            } else {
+                setAppName(projectName || 'Skibidado');
+            }
+        };
+
+        fetchAppName();
+    }, [is_desktop, projectName]);
+
+
 
     if (is_error) {
         return null
@@ -116,11 +139,10 @@ export function AppFooter() {
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50">
             <div
-                className={`absolute bottom-full left-4 right-4 md:left-8 md:right-auto md:max-w-md transform transition-all duration-300 ease-out ${
-                    isHovered && recent_commits.length > 0
+                className={`absolute bottom-full left-4 right-4 md:left-8 md:right-auto md:max-w-md transform transition-all duration-300 ease-out ${isHovered && recent_commits.length > 0
                         ? 'translate-y-0 opacity-100 pointer-events-auto'
                         : 'translate-y-2 opacity-0 pointer-events-none'
-                }`}
+                    }`}
             >
                 <Card className="mb-2 shadow-xl border-2">
                     <div className="absolute bottom-0 left-8 transform translate-y-full">
@@ -132,7 +154,6 @@ export function AppFooter() {
                 </Card>
             </div>
 
-            {/* Footer */}
             <footer
                 className="bg-background/95 backdrop-blur-sm border-t shadow-lg"
                 onMouseEnter={() => setIsHovered(true)}
@@ -140,11 +161,10 @@ export function AppFooter() {
             >
                 <div className="container mx-auto px-4 py-3">
                     <div className="flex items-center justify-between gap-4">
-                        {/* Left side - App info */}
                         <div className="flex items-center gap-3 md:gap-4">
                             <div className="flex items-center gap-2">
                                 <GitCommit className="w-4 h-4 text-primary" />
-                                <span className="font-semibold text-foreground hidden sm:inline">Skibidado</span>
+                                <span className="font-semibold text-foreground hidden sm:inline">{appName}</span>
                             </div>
 
                             <div className="flex items-center gap-2 md:gap-3">
@@ -165,10 +185,30 @@ export function AppFooter() {
                                         </>
                                     )}
                                 </Badge>
+
+                                {process.env.NODE_ENV === 'development' && (
+                                    !is_loading ? (
+                                        <motion.div
+                                            initial={{ opacity: 100 }}
+                                            animate={{ opacity: 0 }}
+                                            transition={{ duration: 2, delay: 5 }}
+                                        >
+                                            <Badge variant="secondary" className="text-xs">
+                                                {is_error ? 'Error' : 'Loaded'}
+                                            </Badge>
+                                        </motion.div>
+                                    ) : (
+                                        <div>
+                                            <Badge variant="secondary" className="text-xs">
+                                                Loading...
+                                            </Badge>
+                                        </div>
+                                    )
+                                )}
+
                             </div>
                         </div>
 
-                        {/* Right side - Commit info */}
                         <div className="flex items-center gap-3 min-w-0 flex-1 justify-end">
                             {is_loading ? (
                                 <div className="flex items-center gap-3">

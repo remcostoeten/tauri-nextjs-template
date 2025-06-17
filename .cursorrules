@@ -1,0 +1,32 @@
+## Tauri 2.0 & Nextjs 15 | CRUD | Sqlite | Drizzle
+
+This is a desktop application which also must run on web. It's built with Nextjs 15+, Tauri 2.0. Drizzle-orm with drizzle-kit, sqlite via Turso and styling via TailwindCSS.
+
+Use Tauri 2.0 API only.
+
+## Core knowledge
+- use bun
+- Write modular code
+- Write as performant and seperated as possible.
+- Use newest hooks like `useOptimistic` etc.
+- NEVER write classes, also NEVER write arrow constants. Only use pure functtional styntax e.g. `function Foo({bar})`
+- NEVER write interfaces, use `type` instead. Only use interfaces if stricly necessary.
+- Prefix EVERY type with `T` e.g. `TFoo`. If there is only one type which isn't exported we call the type `TProps` by default.
+- A page may never contain logic, only a `view` which sits over at `src/views`.
+
+## Helpers
+- use `@/core/shared/if-tauri` and `@/core/shared/if-web` to conditionally render components based on the platform. Some api's are only available in the tauri app, so you don't want to render components that use those api's on the web.
+
+## Database
+
+Don't ever touch the `drizzle.config.ts`
+- The main schema is only responsible for re-exporting schemas comming from `src/module/MODULENAME/api/{MODULENAME-schema.ts,schemas/SUBMODULE-schemas.ts}`
+- The `src/api/db/schema.ts` is only responsible for re-exporting the main schema
+- The database can be imported like so: `import {db} from "@/api/db/connection.ts"`
+
+## API layer
+- Never use `route.ts` or api routes Only server functions.
+- Inside each module there is an `api` folder. This folder contains the server functions.
+- Each server function is namespaced by it's module. For example, the `tasks` module has a `tasks` folder inside the `api` folder. This folder contains all the server functions related to tasks. 
+- Each api folder can consist of :`mutations`, `queries`, a `MODULENAME-repository.ts`, `schema`,`validators` and  when necessary `service(s)`.
+- For CRUD operations we have a factory `useCrudFactory`
